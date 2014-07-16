@@ -10,7 +10,7 @@ link_masses = arm_check.linkMasses;
 link_moments_of_inertia = arm_check.linkMomentsOfInertia;
 
 
-arm = generalKinematicChain ...
+arm = GeneralKinematicChain ...
 ( ...
   joint_positions, ...
   joint_axes, ...
@@ -32,37 +32,37 @@ arm.jointVelocities = theta_dot;
 arm.jointAccelerations = theta_two_dot;
 arm.updateInternals;
 
-disp('arm_check.endEffectorJacobian')
-disp(num2str(arm_check.endEffectorJacobian))
-disp('arm.endEffectorJacobian')
-disp(num2str(arm.endEffectorJacobian))
-
-disp('arm_check.endEffectorPosition')
-disp(num2str(arm_check.endEffectorPosition))
-disp('arm.endEffectorPosition')
-disp(num2str(arm.endEffectorPosition))
-
-disp('arm_check.endEffectorVelocity')
-disp(num2str(arm_check.endEffectorVelocity))
-disp('arm.endEffectorVelocity')
-disp(num2str(arm.endEffectorVelocity))
-
-disp('arm_check.endEffectorAcceleration')
-disp(num2str(arm_check.endEffectorAcceleration))
-disp('arm.endEffectorAcceleration')
-disp(num2str(arm.endEffectorAcceleration))
-
-disp('arm_check.inertiaMatrix')
-disp(num2str(arm_check.inertiaMatrix))
-disp('arm.inertiaMatrix')
-disp(num2str(arm.inertiaMatrix))
-
-disp('arm_check.coriolisMatrix')
-disp(num2str(arm_check.coriolisMatrix))
-disp('arm.coriolisMatrix')
-disp(num2str(arm.coriolisMatrix))
-
-disp('--------------------------------')
+% disp('arm_check.endEffectorJacobian')
+% disp(num2str(arm_check.endEffectorJacobian))
+% disp('arm.endEffectorJacobian')
+% disp(num2str(arm.endEffectorJacobian))
+% 
+% disp('arm_check.endEffectorPosition')
+% disp(num2str(arm_check.endEffectorPosition))
+% disp('arm.endEffectorPosition')
+% disp(num2str(arm.endEffectorPosition))
+% 
+% disp('arm_check.endEffectorVelocity')
+% disp(num2str(arm_check.endEffectorVelocity))
+% disp('arm.endEffectorVelocity')
+% disp(num2str(arm.endEffectorVelocity))
+% 
+% disp('arm_check.endEffectorAcceleration')
+% disp(num2str(arm_check.endEffectorAcceleration))
+% disp('arm.endEffectorAcceleration')
+% disp(num2str(arm.endEffectorAcceleration))
+% 
+% disp('arm_check.inertiaMatrix')
+% disp(num2str(arm_check.inertiaMatrix))
+% disp('arm.inertiaMatrix')
+% disp(num2str(arm.inertiaMatrix))
+% 
+% disp('arm_check.coriolisMatrix')
+% disp(num2str(arm_check.coriolisMatrix))
+% disp('arm.coriolisMatrix')
+% disp(num2str(arm.coriolisMatrix))
+% 
+% disp('--------------------------------')
 % return
 
 stickFigure = KinematicChainStickFigure(arm);

@@ -1,7 +1,7 @@
 
 
 
-classdef generalKinematicChain < kinematicChain
+classdef GeneralKinematicChain < KinematicChain
     properties
         % reference data
         referenceJointTwists;
@@ -24,11 +24,14 @@ classdef generalKinematicChain < kinematicChain
         spatialJacobian
         spatialJacobianTemporalDerivative
         linkJacobians
+        
+        % link visualization data
+        linkVisualizationReferenceData
     end
     methods
-        function obj = generalKinematicChain(jointPositions, jointAxes, endEffectorPosition, linkCenters, linkMasses, linkMomentsOfInertia)
+        function obj = GeneralKinematicChain(jointPositions, jointAxes, endEffectorPosition, linkCenters, linkMasses, linkMomentsOfInertia)
             degrees_of_freedom = length(jointPositions);
-            obj = obj@kinematicChain(degrees_of_freedom);
+            obj = obj@KinematicChain(degrees_of_freedom);
             obj.linkMasses = linkMasses;
             
             % generate references
@@ -47,7 +50,25 @@ classdef generalKinematicChain < kinematicChain
                     calculateTransformedLinkInertiaMatrices(obj.generalizedInertiaMatrices, obj.referenceLinkTransformations);
             end
             
-                
+            obj.updateInternals();
+            
+            % generate link visualization data
+            obj.linkVisualizationReferenceData = struct([]);
+            for i_joint = 1 : obj.numberOfJoints-1
+                start_point = obj.jointTransformations{i_joint}(1:3, 4);
+                end_point = obj.jointTransformations{i_joint+1}(1:3, 4);
+                obj.linkVisualizationData(i_joint).startPoints(:, 1) = start_point;
+                obj.linkVisualizationData(i_joint).endPoints(:, 1) = end_point;
+                obj.linkVisualizationReferenceData(i_joint).startPoints(:, 1) = start_point;
+                obj.linkVisualizationReferenceData(i_joint).endPoints(:, 1) = end_point;
+            end
+            start_point = obj.jointTransformations{obj.numberOfJoints}(1:3, 4);
+            end_point = obj.endEffectorTransformation(1:3, 4);
+            obj.linkVisualizationData(obj.numberOfJoints).startPoints(:, 1) = start_point;
+            obj.linkVisualizationData(obj.numberOfJoints).endPoints(:, 1) = end_point;
+            obj.linkVisualizationReferenceData(obj.numberOfJoints).startPoints(:, 1) = start_point;
+            obj.linkVisualizationReferenceData(obj.numberOfJoints).endPoints(:, 1) = end_point;
+            
             
             
             
@@ -86,6 +107,7 @@ classdef generalKinematicChain < kinematicChain
             % update second-order temporal derivatives
             obj.calculateSpatialJacobianTemporalDerivative();
             obj.calculateEndEffectorAcceleration();
+            
         end
         function calculateTwistExponentials(obj)
             % calculate the twist exponentials from the current joint angles and the reference twists
@@ -319,6 +341,44 @@ classdef generalKinematicChain < kinematicChain
             S2 = twistCoordinatesToMatrix(obj.spatialJacobian * obj.jointVelocities) * [obj.endEffectorVelocity; 0];
             end_effector_acceleration = S1 + S2;
             obj.endEffectorAcceleration = end_effector_acceleration(1:3);
-        end        
+        end
+        function updateLinkVisualizationData(obj)
+            for i_joint = 1 : obj.numberOfJoints
+                for i_line = 1 : size(obj.linkVisualizationReferenceData(i_joint).startPoints, 2)
+                    start_point_reference = [obj.linkVisualizationReferenceData(i_joint).startPoints(:, i_line); 1];
+                    start_point_current = obj.productsOfExponentials{i_joint} * start_point_reference;
+                    obj.linkVisualizationData(i_joint).startPoints(:, i_line) = start_point_current(1:3);
+                    end_point_reference = [obj.linkVisualizationReferenceData(i_joint).endPoints(:, i_line); 1];
+                    end_point_current = obj.productsOfExponentials{i_joint} * end_point_reference;
+                    obj.linkVisualizationData(i_joint).endPoints(:, i_line) = end_point_current(1:3);
+                end
+            end
+            
+        end
     end
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
