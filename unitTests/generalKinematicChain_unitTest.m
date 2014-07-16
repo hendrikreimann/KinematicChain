@@ -63,7 +63,7 @@ disp('arm.coriolisMatrix')
 disp(num2str(arm.coriolisMatrix))
 
 disp('--------------------------------')
-return
+% return
 
 stickFigure = KinematicChainStickFigure(arm);
 stickFigure.update();
