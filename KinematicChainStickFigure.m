@@ -8,6 +8,7 @@ classdef KinematicChainStickFigure
         sceneBound;
         jointPlots;
         linkPlots;
+        linkCenterPlots;
         endEffectorPlot;
     end 
     methods
@@ -40,6 +41,7 @@ classdef KinematicChainStickFigure
                 for i_line = 1 : size(kinematicChain.linkVisualizationReferenceData(i_joint).startPoints, 2)
                     obj.linkPlots(i_joint).linePlots(i_line) = plot3(0, 0, 0, 'color', 'b', 'Linewidth', 2, 'Linestyle', '-');
                 end
+                obj.linkCenterPlots(i_joint) = plot([0, 0], [0, 0], 'color', 'm', 'Linewidth', 2, 'Linestyle', 'x');
             end
             
             
@@ -69,6 +71,7 @@ classdef KinematicChainStickFigure
                     'Zdata', obj.kinematicChain.endEffectorPosition(3));
             % plot links
             for i_joint = 1 : obj.kinematicChain.numberOfJoints
+                % lines
                 for i_line = 1 : size(obj.kinematicChain.linkVisualizationReferenceData(i_joint).startPoints, 2)
                     
                     start_point_current = obj.kinematicChain.linkVisualizationData(i_joint).startPoints(:, i_line);
@@ -81,6 +84,14 @@ classdef KinematicChainStickFigure
                         'Zdata', [start_point_current(3), end_point_current(3)] ...
                         );
                 end
+                % center of mass
+                set( ...
+                     obj.linkCenterPlots(i_joint), ...
+                     'Xdata', obj.kinematicChain.linkTransformations{i_joint}(1, 4), ...
+                     'Ydata', obj.kinematicChain.linkTransformations{i_joint}(2, 4), ...
+                     'Zdata', obj.kinematicChain.linkTransformations{i_joint}(3, 4) ...
+                   )
+                
             end
             
 %             for i_joint = 1 : obj.kinematicChain.numberOfJoints - 1

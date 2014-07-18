@@ -29,7 +29,7 @@ classdef GeneralKinematicChain < KinematicChain
         linkVisualizationReferenceData
     end
     methods
-        function obj = GeneralKinematicChain(jointPositions, jointAxes, endEffectorPosition, linkCenters, linkMasses, linkMomentsOfInertia)
+        function obj = GeneralKinematicChain(jointPositions, jointAxes, jointTypes, endEffectorPosition, linkCenters, linkMasses, linkMomentsOfInertia)
             degrees_of_freedom = length(jointPositions);
             obj = obj@KinematicChain(degrees_of_freedom);
             obj.linkMasses = linkMasses;
@@ -37,7 +37,7 @@ classdef GeneralKinematicChain < KinematicChain
             % generate references
             for i_joint = 1 : degrees_of_freedom
                 obj.referenceJointTransformations{i_joint} = createReferenceTransformation(jointPositions{i_joint}, eye(3));
-                obj.referenceJointTwists{i_joint} = createTwist(jointPositions{i_joint}, jointAxes{i_joint});
+                obj.referenceJointTwists{i_joint} = createTwist(jointPositions{i_joint}, jointAxes{i_joint}, jointTypes(i_joint));
             end
             obj.referenceEndEffectorTransformation = createReferenceTransformation(endEffectorPosition, eye(3));
             
