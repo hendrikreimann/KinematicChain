@@ -25,7 +25,7 @@ classdef GeneralKinematicChain < KinematicChain
         spatialJacobianTemporalDerivative
         linkJacobians
         
-        % link visualization data
+        % visualization data
         linkVisualizationReferenceData
     end
     methods

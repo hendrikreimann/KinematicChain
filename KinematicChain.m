@@ -27,8 +27,10 @@ classdef KinematicChain < handle
         endEffectorAcceleration;
         endEffectorJacobian;
         
-        % link visualization data
+        % visualization data
         linkVisualizationData
+        miscellaneousLinesStartPoints
+        miscellaneousLinesEndPoints
     end
     methods (Abstract)
         updateInternals(obj)
@@ -63,6 +65,8 @@ classdef KinematicChain < handle
                 obj.linkVisualizationData(i_joint).startPoints(:, 1) = start_point;
                 obj.linkVisualizationData(i_joint).endPoints(:, 1) = end_point;
             end
+            obj.miscellaneousLinesStartPoints = [];
+            obj.miscellaneousLinesEndPoints = [];
             
         end
         function obj = calculateAccelerationsFromExternalTorques(obj)

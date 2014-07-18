@@ -1,6 +1,6 @@
 % class for the display of a stick figure
 
-classdef KinematicChainStickFigure
+classdef KinematicChainStickFigure < handle
     properties
         kinematicChain;
         sceneFigure;
@@ -10,13 +10,14 @@ classdef KinematicChainStickFigure
         linkPlots;
         linkCenterPlots;
         endEffectorPlot;
+        miscellaneousPlots;
     end 
     methods
         function obj = KinematicChainStickFigure(kinematicChain, sceneBound)
             obj.kinematicChain = kinematicChain;
             kinematicChain.updateLinkVisualizationData();
             if nargin < 2
-                obj.sceneBound = [-2; 2; -2; 2; -2; 2];
+                obj.sceneBound = [-2; 2; -2; 2; -2; 2]*0.5;
 %                 obj.sceneBound = [-5; 5; -5; 5; -5; 5];
             else
                 obj.sceneBound = sceneBound;
@@ -41,10 +42,13 @@ classdef KinematicChainStickFigure
                 for i_line = 1 : size(kinematicChain.linkVisualizationReferenceData(i_joint).startPoints, 2)
                     obj.linkPlots(i_joint).linePlots(i_line) = plot3(0, 0, 0, 'color', 'b', 'Linewidth', 2, 'Linestyle', '-');
                 end
-                obj.linkCenterPlots(i_joint) = plot([0, 0], [0, 0], 'color', 'm', 'Linewidth', 2, 'Linestyle', 'x');
+                obj.linkCenterPlots(i_joint) = plot3([0, 0], [0, 0], [0, 0], 'color', 'm', 'Linewidth', 2, 'Linestyle', 'x');
             end
             
-            
+            % set up miscellaneous plots
+            for i_line = 1 : size(kinematicChain.miscellaneousLinesStartPoints, 2)
+                obj.miscellaneousPlots(i_line) = plot3([0 1], [0 1], [0 0], 'color', 'c', 'Linewidth', 1, 'Linestyle', '-');
+            end
             
             set(gca,'xlim',[obj.sceneBound(1), obj.sceneBound(2)], ...
                     'ylim',[obj.sceneBound(3), obj.sceneBound(4)], ...
@@ -91,11 +95,27 @@ classdef KinematicChainStickFigure
                      'Ydata', obj.kinematicChain.linkTransformations{i_joint}(2, 4), ...
                      'Zdata', obj.kinematicChain.linkTransformations{i_joint}(3, 4) ...
                    )
+            end
+            for i_line = 1 : length(obj.miscellaneousPlots)
+                set( ...
+                     obj.miscellaneousPlots(i_line), ...
+                        'Xdata', [obj.kinematicChain.miscellaneousLinesStartPoints(1, i_line), obj.kinematicChain.miscellaneousLinesEndPoints(1, i_line)], ...
+                        'Ydata', [obj.kinematicChain.miscellaneousLinesStartPoints(2, i_line), obj.kinematicChain.miscellaneousLinesEndPoints(2, i_line)], ...
+                        'Zdata', [obj.kinematicChain.miscellaneousLinesStartPoints(3, i_line), obj.kinematicChain.miscellaneousLinesEndPoints(3, i_line)] ...
+                   )
                 
             end
+
             
             
-            
-        end        
+        end
+        function setMiscellaneousPlotColor(obj, index, color)
+            if index > length(obj.miscellaneousPlots)
+                error('index larger than number of miscellaneous plots')
+            else
+                obj.miscellaneousPlots(index) = plot3(obj.sceneAxes, [0 1], [0 1], [0 0], 'color', color, 'Linewidth', 1, 'Linestyle', '-');
+                obj.update();
+            end
+        end
     end
 end

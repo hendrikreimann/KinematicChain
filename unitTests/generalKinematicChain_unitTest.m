@@ -22,6 +22,10 @@ arm = GeneralKinematicChain ...
   link_moments_of_inertia ...
 );
 
+% add eef-velocity visualization data
+arm.miscellaneousLinesStartPoints = zeros(3, 2);
+arm.miscellaneousLinesEndPoints = zeros(3, 2);
+
 theta = randn(2, 1);
 theta_dot = randn(2, 1);
 theta_two_dot = randn(2, 1);
@@ -69,19 +73,26 @@ arm.updateInternals;
 
 stickFigure = KinematicChainStickFigure(arm);
 stickFigure.update();
+stickFigure.setMiscellaneousPlotColor(2, [1 0 1]);
 
 arm.jointAngles = [0; 0];
-arm.jointVelocities = [2; 2];
+arm.jointVelocities = [0.3; 0.5];
 arm.jointAccelerations = [0; 0];
 
 
-timeStep = 0.001;
+timeStep = 0.002;
 counter = 1;
 while true
     arm.calculateAccelerationsFromExternalTorques;
     arm.jointVelocities = arm.jointVelocities + timeStep*arm.jointAccelerations;
     arm.jointAngles = arm.jointAngles + timeStep*arm.jointVelocities + timeStep^2*arm.jointAccelerations;
     arm.updateInternals;
+    
+    % update eef velocity/acceleration visualization
+    arm.miscellaneousLinesStartPoints(:, 1) = arm.endEffectorPosition;
+    arm.miscellaneousLinesEndPoints(:, 1) = arm.endEffectorPosition + arm.endEffectorVelocity;
+    arm.miscellaneousLinesStartPoints(:, 2) = arm.endEffectorPosition + arm.endEffectorVelocity;
+    arm.miscellaneousLinesEndPoints(:, 2) = arm.endEffectorPosition + arm.endEffectorVelocity + arm.endEffectorAcceleration;
     
     counter = counter+1;
     if counter == 10
