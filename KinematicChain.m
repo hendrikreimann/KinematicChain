@@ -22,10 +22,11 @@ classdef KinematicChain < handle
         jointPositions;
         
         % dependent variables - end-effector
-        endEffectorPosition;
-        endEffectorVelocity;
-        endEffectorAcceleration;
-        endEffectorJacobian;
+        endEffectorPosition
+        endEffectorVelocity
+        endEffectorAcceleration
+        endEffectorJacobian
+        endEffectorJacobianTemporalDerivative
         
         % visualization data
         linkVisualizationData
@@ -54,6 +55,7 @@ classdef KinematicChain < handle
             obj.endEffectorVelocity = zeros(3, 1);
             obj.endEffectorAcceleration = zeros(3, 1);
             obj.endEffectorJacobian = zeros(3, degreesOfFreedom);
+            obj.endEffectorJacobianTemporalDerivative = zeros(3, degreesOfFreedom);
             
             % generate link visualization data
             % XXX this does not work for the general case yet, just making

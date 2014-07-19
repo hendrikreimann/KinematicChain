@@ -43,6 +43,11 @@ arm.updateInternals;
 % disp('arm.endEffectorJacobian')
 % disp(num2str(arm.endEffectorJacobian))
 % 
+% disp('arm_check.endEffectorJacobianTemporalDerivative')
+% disp(num2str(arm_check.endEffectorJacobianTemporalDerivative))
+% disp('arm.endEffectorJacobianTemporalDerivative')
+% disp(num2str(arm.endEffectorJacobianTemporalDerivative))
+%
 % disp('arm_check.endEffectorPosition')
 % disp(num2str(arm_check.endEffectorPosition))
 % disp('arm.endEffectorPosition')
@@ -69,7 +74,7 @@ arm.updateInternals;
 % disp(num2str(arm.coriolisMatrix))
 % 
 % disp('--------------------------------')
-% return
+return
 
 stickFigure = KinematicChainStickFigure(arm);
 stickFigure.update();

@@ -47,7 +47,7 @@ classdef KinematicChainStickFigure < handle
             
             % set up miscellaneous plots
             for i_line = 1 : size(kinematicChain.miscellaneousLinesStartPoints, 2)
-                obj.miscellaneousPlots(i_line) = plot3([0 1], [0 1], [0 0], 'color', 'c', 'Linewidth', 1, 'Linestyle', '-');
+                obj.miscellaneousPlots(i_line) = plot3([0 0], [0 0], [0 0], 'color', 'c', 'Linewidth', 1, 'Linestyle', '-');
             end
             
             set(gca,'xlim',[obj.sceneBound(1), obj.sceneBound(2)], ...

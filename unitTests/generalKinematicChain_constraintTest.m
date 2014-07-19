@@ -24,8 +24,7 @@ arm.jointVelocities = [-1; 1; 1] * -1;
 arm.jointAccelerations = [0; 0; 0];
 arm.updateInternals;
 
-wall_position = 2;
-wall_stiffness = 5000;
+wall_position = arm.endEffectorPosition(1);
 
 % add visualization data for the acceleration induced by the external wrench
 arm.miscellaneousLinesStartPoints = zeros(3, 4);
@@ -33,35 +32,24 @@ arm.miscellaneousLinesEndPoints = zeros(3, 4);
 
 stickFigure = KinematicChainStickFigure(arm, 4*[-1, 1, -1, 1, -1, 1]);
 stickFigure.setMiscellaneousPlotColor(2, [1 0 1]);
-stickFigure.setMiscellaneousPlotColor(3, [0 1 0]);
-stickFigure.setMiscellaneousPlotColor(4, [0 0 0]);
-arm.miscellaneousLinesStartPoints(:, 4) = [wall_position; -5; 0];
-arm.miscellaneousLinesEndPoints(:, 4) = [wall_position; 5; 0];
-
-% external_wrench = [-5; 0; 0; 0; 0; 0];
+stickFigure.setMiscellaneousPlotColor(3, [0 0 0]);
+arm.miscellaneousLinesStartPoints(:, 3) = [wall_position; -5; 0];
+arm.miscellaneousLinesEndPoints(:, 3) = [wall_position; 5; 0];
 
 
+external_torques = [0; 0; 0];
 
 
 
 timeStep = 0.001;
 counter = 1;
 while true
-    % calculate the wrench from the elastic contact
-    indentation = max(arm.endEffectorPosition(1) - 2, 0);
-    elastic_force = wall_stiffness * indentation;
-    external_wrench = elastic_force * [-1; 0; 0; 0; 0; 0];
+    % calculate constraint forces
+    M = arm.inertiaMatrix;
+    A = arm.endEffectorJacobian(1, :);
+    lambda = (A*M*A')^(-1) * (A*M^(-1)*(
     
-    % transform the external wrench into end-effector coordinates
-    R_world_eef = arm.endEffectorTransformation(1:3, 1:3);
-    T_eefRotation = [R_world_eef zeros(3,1); 0 0 0 1];
-    A_eefRotation = createAdjointTransformation(T_eefRotation);
-    eef_wrench = A_eefRotation' * external_wrench;
     
-    % transform the wrench into joint torques
-    eef_transformation_adjoint = createAdjointTransformation(arm.endEffectorTransformation);
-    body_jacobian = invertAdjoint(eef_transformation_adjoint) * arm.spatialJacobian;
-    torques_from_eef_wrench = body_jacobian' * eef_wrench;
     
     % apply torques and make euler step
     arm.externalTorques = torques_from_eef_wrench;

@@ -107,6 +107,7 @@ classdef GeneralKinematicChain < KinematicChain
             % update second-order temporal derivatives
             obj.calculateSpatialJacobianTemporalDerivative();
             obj.calculateEndEffectorAcceleration();
+            obj.calculateEndEffectorJacobianTemporalDerivative();
             
         end
         function calculateTwistExponentials(obj)
@@ -353,6 +354,42 @@ classdef GeneralKinematicChain < KinematicChain
                     obj.linkVisualizationData(i_joint).endPoints(:, i_line) = end_point_current(1:3);
                 end
             end
+        end
+        function calculateEndEffectorJacobianTemporalDerivative(obj)
+            end_effector_position = [obj.endEffectorPosition; 1];
+            end_effector_velocity = [obj.endEffectorVelocity; 0];
+            for j_joint = 1 : obj.numberOfJoints
+                S1 = twistCoordinatesToMatrix(obj.spatialJacobianTemporalDerivative(:, j_joint)) * end_effector_position;
+                S2 = twistCoordinatesToMatrix(obj.spatialJacobian(:, j_joint)) * end_effector_velocity;
+                column = S1 + S2;
+                obj.endEffectorJacobianTemporalDerivative(:, j_joint) = column(1:3);
+            end
+            
+            
+            
+
+%   cv::Mat column;
+%   cv::Mat S1;
+%   cv::Mat S2;
+%   mTransformationsLock.lockForRead();
+%   for (unsigned int j = 0; j <= jointIndex; j++)
+%   {
+%     S1 = cedar::aux::math::wedgeTwist<double>(calculateTwistTemporalDerivative(j)) * point_world;
+%     S2 = cedar::aux::math::wedgeTwist<double>
+%          (
+%            cedar::aux::math::rigidToAdjointTransformation<double>(mpRootCoordinateFrame->getTransformation())
+%            *mJointTwists[j]
+%          )
+%          * calculateVelocity(point_world, jointIndex, WORLD_COORDINATES);
+% 
+%     column = S1 + S2;
+%     // export
+%     result.at<double>(0, j) = column.at<double>(0, 0);
+%     result.at<double>(1, j) = column.at<double>(1, 0);
+%     result.at<double>(2, j) = column.at<double>(2, 0);
+%   }
+%   mTransformationsLock.unlock();
+% }
             
         end
     end
