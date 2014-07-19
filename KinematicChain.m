@@ -11,6 +11,7 @@ classdef KinematicChain < handle
         jointVelocities;
         jointAccelerations;
         externalTorques;
+        constraintTorques;
         
         % dynamic variables
         linkMasses;
@@ -44,6 +45,7 @@ classdef KinematicChain < handle
             obj.jointVelocities = zeros(degreesOfFreedom, 1);
             obj.jointAccelerations = zeros(degreesOfFreedom, 1);
             obj.externalTorques = zeros(degreesOfFreedom, 1);
+            obj.constraintTorques = zeros(degreesOfFreedom, 1);
             
             obj.inertiaMatrix = zeros(degreesOfFreedom);
             obj.coriolisMatrix = zeros(degreesOfFreedom);
@@ -74,6 +76,7 @@ classdef KinematicChain < handle
         function obj = calculateAccelerationsFromExternalTorques(obj)
             obj.jointAccelerations = obj.inertiaMatrix^(-1) * ...
                                           (obj.externalTorques ...
+                                            - obj.constraintTorques ...
                                             - obj.gravitationalTorqueMatrix ...
                                             - obj.coriolisMatrix * obj.jointVelocities ...
                                           );
