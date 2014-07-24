@@ -11,6 +11,7 @@ classdef KinematicChainStickFigure < handle
         linkCenterPlots;
         endEffectorPlot;
         miscellaneousPlots;
+        markerPlots;
     end 
     methods
         function obj = KinematicChainStickFigure(kinematicChain, sceneBound)
@@ -50,6 +51,15 @@ classdef KinematicChainStickFigure < handle
                 obj.miscellaneousPlots(i_line) = plot3([0 0], [0 0], [0 0], 'color', 'c', 'Linewidth', 1, 'Linestyle', '-');
             end
             
+            % set up marker plots
+            obj.markerPlots = cell(kinematicChain.numberOfJoints, 1);
+            for i_joint = 1 : kinematicChain.numberOfJoints
+                for i_marker = 1 : size(kinematicChain.markerPositions{i_joint}, 2)
+                    obj.markerPlots{i_joint}(i_marker) = plot3(0, 0, 0, 'color', 'g', 'Linewidth', 1, 'Marker', '.');
+                end
+            end
+
+            
             set(gca,'xlim',[obj.sceneBound(1), obj.sceneBound(2)], ...
                     'ylim',[obj.sceneBound(3), obj.sceneBound(4)], ...
                     'zlim',[obj.sceneBound(5), obj.sceneBound(6)] ...
@@ -60,7 +70,9 @@ classdef KinematicChainStickFigure < handle
         end
         
         function update(obj)
+            % update data
             obj.kinematicChain.updateLinkVisualizationData();
+            
             % plot joints
             for i_joint = 1 : obj.kinematicChain.numberOfJoints
                 set(obj.jointPlots(i_joint), ...
@@ -106,7 +118,18 @@ classdef KinematicChainStickFigure < handle
                 
             end
 
-            
+            % markers
+            for i_joint = 1 : obj.kinematicChain.numberOfJoints
+                for i_marker = 1 : size(obj.kinematicChain.markerPositions{i_joint}, 2)
+                    set( ...
+                         obj.markerPlots{i_joint}(i_marker), ...
+                            'Xdata', obj.kinematicChain.markerPositions{i_joint}(1, i_marker), ...
+                            'Ydata', obj.kinematicChain.markerPositions{i_joint}(2, i_marker), ...
+                            'Zdata', obj.kinematicChain.markerPositions{i_joint}(3, i_marker) ...
+                       )
+                end
+            end
+
             
         end
         function setMiscellaneousPlotColor(obj, index, color)

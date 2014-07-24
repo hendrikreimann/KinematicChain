@@ -10,7 +10,6 @@ link_positions = {[arm_check.linkComDistancesFromJoint(1); 0; 0]; ...
 link_masses = arm_check.linkMasses;
 link_moments_of_inertia = arm_check.linkMomentsOfInertia;
 
-
 arm = GeneralKinematicChain ...
 ( ...
   joint_positions, ...
@@ -21,6 +20,14 @@ arm = GeneralKinematicChain ...
   link_masses, ...
   link_moments_of_inertia ...
 );
+arm.addMarker(1, [arm_check.linkComDistancesFromJoint(1)+0.05; 0.05; 0]);
+arm.addMarker(1, [arm_check.linkComDistancesFromJoint(1)+0.05; -0.05; 0]);
+arm.addMarker(1, [arm_check.linkComDistancesFromJoint(1)-0.05; -0.05; 0]);
+arm.addMarker(1, [arm_check.linkComDistancesFromJoint(1)-0.05; 0.05; 0]);
+arm.addMarker(2, [arm_check.linkLengths(1) + arm_check.linkComDistancesFromJoint(2) + 0.05; 0.05; 0]);
+arm.addMarker(2, [arm_check.linkLengths(1) + arm_check.linkComDistancesFromJoint(2) + 0.05; -0.05; 0]);
+arm.addMarker(2, [arm_check.linkLengths(1) + arm_check.linkComDistancesFromJoint(2) - 0.05; -0.05; 0]);
+arm.addMarker(2, [arm_check.linkLengths(1) + arm_check.linkComDistancesFromJoint(2) - 0.05; 0.05; 0]);
 
 % add eef-velocity visualization data
 arm.miscellaneousLinesStartPoints = zeros(3, 2);
@@ -74,7 +81,7 @@ arm.updateInternals;
 % disp(num2str(arm.coriolisMatrix))
 % 
 % disp('--------------------------------')
-return
+% return
 
 stickFigure = KinematicChainStickFigure(arm);
 stickFigure.update();

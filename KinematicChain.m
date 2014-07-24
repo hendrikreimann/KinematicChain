@@ -22,6 +22,9 @@ classdef KinematicChain < handle
         % dependent variables - joints
         jointPositions;
         
+        % dependent variables - markers
+        markerPositions;
+        
         % dependent variables - end-effector
         endEffectorPosition
         endEffectorVelocity
@@ -58,7 +61,10 @@ classdef KinematicChain < handle
             obj.endEffectorAcceleration = zeros(3, 1);
             obj.endEffectorJacobian = zeros(3, degreesOfFreedom);
             obj.endEffectorJacobianTemporalDerivative = zeros(3, degreesOfFreedom);
-            
+
+            % generate marker data container
+            obj.markerPositions = cell(obj.numberOfJoints, 1);
+
             % generate link visualization data
             % XXX this does not work for the general case yet, just making
             % sure that there is a skeleton data structure

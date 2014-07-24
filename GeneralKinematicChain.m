@@ -10,6 +10,7 @@ classdef GeneralKinematicChain < KinematicChain
         referenceLinkTransformations;
         transformedLinkInertiaMatrices;
         generalizedInertiaMatrices;
+        markerReferencePositions;
         
         % screw geometry data
         twistExponentials
@@ -50,6 +51,9 @@ classdef GeneralKinematicChain < KinematicChain
                     calculateTransformedLinkInertiaMatrices(obj.generalizedInertiaMatrices, obj.referenceLinkTransformations);
             end
             
+            % generate marker data container
+            obj.markerReferencePositions = cell(obj.numberOfJoints, 1);
+
             obj.updateInternals();
             
             % generate link visualization data
@@ -69,7 +73,7 @@ classdef GeneralKinematicChain < KinematicChain
             obj.linkVisualizationReferenceData(obj.numberOfJoints).startPoints(:, 1) = start_point;
             obj.linkVisualizationReferenceData(obj.numberOfJoints).endPoints(:, 1) = end_point;
             
-            
+           
             
             
         end
@@ -109,6 +113,19 @@ classdef GeneralKinematicChain < KinematicChain
             obj.calculateEndEffectorAcceleration();
             obj.calculateEndEffectorJacobianTemporalDerivative();
             
+            % update marker positions
+            for i_joint = 1 : obj.numberOfJoints
+                joint_transformation = obj.productsOfExponentials{i_joint};
+                for i_marker = 1 : size(obj.markerReferencePositions{i_joint}, 2)
+                    current_position = joint_transformation * obj.markerReferencePositions{i_joint}(:, i_marker);
+                    obj.markerPositions{i_joint}(:, i_marker) = current_position;
+                end
+            end
+        end
+        function addMarker(obj, joint_index, marker_reference_position)
+            obj.markerReferencePositions{joint_index} = [obj.markerReferencePositions{joint_index} [marker_reference_position; 1]];
+            obj.markerPositions{joint_index} = [obj.markerPositions{joint_index} zeros(4, 1)];
+            obj.updateInternals();
         end
         function calculateTwistExponentials(obj)
             % calculate the twist exponentials from the current joint angles and the reference twists

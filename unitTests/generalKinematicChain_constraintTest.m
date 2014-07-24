@@ -39,7 +39,7 @@ arm.miscellaneousLinesEndPoints(:, 3) = [wall_position; 5; 0];
 
 external_torques = [10; 15; -10];
 
-max = 1000;
+max = 100000;
 timeseries_joint_angle = zeros(arm.numberOfJoints, max);
 timeseries_joint_velocity = zeros(arm.numberOfJoints, max);
 timeseries_joint_acceleration = zeros(arm.numberOfJoints, max);
@@ -50,8 +50,8 @@ counter = 1;
 while counter < max;
     % calculate constraint forces
     M = arm.inertiaMatrix;
-    A = arm.endEffectorJacobian(1, :);
-    ADot = arm.endEffectorJacobianTemporalDerivative(1, :);
+    A = arm.endEffectorJacobian(2, :);
+    ADot = arm.endEffectorJacobianTemporalDerivative(2, :);
     lambda = (A*M^(-1)*A')^(-1) ...
         * (A*M^(-1)*(external_torques - arm.coriolisMatrix*arm.jointVelocities - arm.gravitationalTorqueMatrix) + ADot*arm.jointVelocities);
     
