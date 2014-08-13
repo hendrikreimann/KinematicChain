@@ -122,10 +122,45 @@ classdef GeneralKinematicChain < KinematicChain
                 end
             end
         end
+        function updateKinematics(obj)
+            % update geometric transformations
+            obj.calculateTwistExponentials();
+            obj.calculateProductsOfExponentials();
+            obj.calculateJointTransformations();
+            obj.calculateEndEffectorTransformation();
+            
+            % update Jacobians
+            obj.calculateSpatialJacobian();
+            obj.calculateEndEffectorJacobian();
+            
+            % update dependent variables
+            for i_joint = 1 : obj.numberOfJoints
+                obj.jointPositions{i_joint} = obj.jointTransformations{i_joint}(1:3, 4);
+            end
+            obj.endEffectorPosition = obj.endEffectorTransformation(1:3, 4);
+            obj.endEffectorVelocity = obj.endEffectorJacobian * obj.jointVelocities;
+            
+            % calculate things needed for inertia and coriolis/centrifugal matrix
+            obj.calculateLinkTransformations();
+            
+            % update second-order temporal derivatives
+            obj.calculateSpatialJacobianTemporalDerivative();
+            obj.calculateEndEffectorAcceleration();
+            obj.calculateEndEffectorJacobianTemporalDerivative();
+            
+            % update marker positions
+            for i_joint = 1 : obj.numberOfJoints
+                joint_transformation = obj.productsOfExponentials{i_joint};
+                for i_marker = 1 : size(obj.markerReferencePositions{i_joint}, 2)
+                    current_position = joint_transformation * obj.markerReferencePositions{i_joint}(:, i_marker);
+                    obj.markerPositions{i_joint}(:, i_marker) = current_position;
+                end
+            end
+        end        
         function addMarker(obj, joint_index, marker_reference_position)
             obj.markerReferencePositions{joint_index} = [obj.markerReferencePositions{joint_index} [marker_reference_position; 1]];
             obj.markerPositions{joint_index} = [obj.markerPositions{joint_index} zeros(4, 1)];
-            obj.updateInternals();
+            obj.markerExportMap = [obj.markerExportMap [joint_index; size(obj.markerPositions{joint_index}, 2)]];
         end
         function calculateTwistExponentials(obj)
             % calculate the twist exponentials from the current joint angles and the reference twists
