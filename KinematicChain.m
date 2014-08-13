@@ -22,8 +22,9 @@ classdef KinematicChain < handle
         % dependent variables - joints
         jointPositions;
         
-        % dependent variables - markers
+        % markers
         markerPositions;
+        markerExportMap;
         
         % dependent variables - end-effector
         endEffectorPosition
@@ -64,6 +65,7 @@ classdef KinematicChain < handle
 
             % generate marker data container
             obj.markerPositions = cell(obj.numberOfJoints, 1);
+            obj.markerExportMap = [];
 
             % generate link visualization data
             % XXX this does not work for the general case yet, just making
@@ -88,6 +90,60 @@ classdef KinematicChain < handle
                                           );
             
         end
-    
+        function numberOfMarkers = getNumberOfMarkers(obj, jointIndex)
+            if nargin < 2
+                numberOfMarkers = size(obj.markerExportMap, 2);
+            else
+                joint_occurrences = (obj.markerExportMap(1, :) == jointIndex);
+                numberOfMarkers = sum(joint_occurrences);
+            end
+        end
+        function markerPositions = exportMarkerPositions(obj)
+            number_of_markers = size(obj.markerExportMap, 2);
+            markerPositions = zeros(1, number_of_markers*3);
+            for i_marker = 1 : number_of_markers
+                marker_joint = obj.markerExportMap(1, i_marker);
+                marker_index = obj.markerExportMap(2, i_marker);
+                marker_position = obj.markerPositions{marker_joint}(1:3, marker_index);
+                markerPositions(1, 3*(i_marker - 1) + 1 : 3*(i_marker - 1) + 3) = marker_position';                
+            end
+        end
+        function exportMapIndices = getMarkerExportIndices(obj, jointIndex, markerIndex)
+            if nargin < 3
+                % return indices for all markers at this segment
+                export_index_map = (obj.markerExportMap(1, :) == jointIndex);
+                export_indices = find(export_index_map);
+                number_of_markers = length(export_indices);
+                exportMapIndices = zeros(1, number_of_markers*3);
+                for i_marker = 1 : number_of_markers
+                    exportMapIndices(3*(i_marker-1)+1 : 3*(i_marker-1)+3) ...
+                        = 3*(export_indices(i_marker)-1)+1 : 3*(export_indices(i_marker)-1)+3;
+                end
+            else
+                % return indices for the specified marker
+                joint_occurrences = (obj.markerExportMap(1, :) == jointIndex);
+                marker_occurrences = (obj.markerExportMap(2, :) == markerIndex);
+                export_index_map = joint_occurrences .* marker_occurrences;
+                export_index = find(export_index_map);
+                exportMapIndices = 3*(export_index-1)+1 : 3*(export_index-1)+3;
+            end
+        end
     end
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
