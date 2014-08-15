@@ -81,6 +81,17 @@ classdef KinematicChain < handle
             obj.miscellaneousLinesEndPoints = [];
             
         end
+        function new = copy(this) % Make a deep copy of this object
+            % Instantiate new object of the same class.
+            new = feval(class(this));
+ 
+            % Copy all non-hidden properties.
+            p = properties(this);
+            for i = 1:length(p)
+                new.(p{i}) = this.(p{i});
+            end
+        end
+
         function obj = calculateAccelerationsFromExternalTorques(obj)
             obj.jointAccelerations = obj.inertiaMatrix^(-1) * ...
                                           (obj.externalTorques ...

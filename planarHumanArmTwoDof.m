@@ -8,6 +8,10 @@ classdef planarHumanArmTwoDof < KinematicChain
     end
     methods
         function obj = planarHumanArmTwoDof(mass, height)
+            if nargin == 0
+                mass = 80;
+                height = 1.8;
+            end
             obj = obj@KinematicChain(2);
             obj.mass = mass;
             obj.height = height;

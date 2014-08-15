@@ -31,6 +31,17 @@ classdef GeneralKinematicChain < KinematicChain
     end
     methods
         function obj = GeneralKinematicChain(jointPositions, jointAxes, jointTypes, endEffectorPosition, linkCenters, linkMasses, linkMomentsOfInertia)
+            if nargin == 0
+                jointPositions = {[0; 0; 0]};
+                jointAxes = {[0; 0; 1]};
+                jointTypes = 1;
+                endEffectorPosition = [2; 0; 0];
+                linkCenters = {[1; 0; 0]};
+                linkMasses = 1;
+                linkMomentsOfInertia = [1 1 1];
+            end
+            
+            
             degrees_of_freedom = length(jointPositions);
             obj = obj@KinematicChain(degrees_of_freedom);
             obj.linkMasses = linkMasses;
@@ -42,14 +53,12 @@ classdef GeneralKinematicChain < KinematicChain
             end
             obj.referenceEndEffectorTransformation = createReferenceTransformation(endEffectorPosition, eye(3));
             
-            if nargin > 3
-                for i_joint = 1 : degrees_of_freedom
-                    obj.referenceLinkTransformations{i_joint} = createReferenceTransformation(linkCenters{i_joint}, eye(3));
-                    obj.generalizedInertiaMatrices{i_joint} = generalizedInertiaMatrix(linkMasses(i_joint), linkMomentsOfInertia(i_joint, :));
-                end
-                obj.transformedLinkInertiaMatrices = ...                    % calculate transformed inertia matrices
-                    calculateTransformedLinkInertiaMatrices(obj.generalizedInertiaMatrices, obj.referenceLinkTransformations);
+            for i_joint = 1 : degrees_of_freedom
+                obj.referenceLinkTransformations{i_joint} = createReferenceTransformation(linkCenters{i_joint}, eye(3));
+                obj.generalizedInertiaMatrices{i_joint} = generalizedInertiaMatrix(linkMasses(i_joint), linkMomentsOfInertia(i_joint, :));
             end
+            obj.transformedLinkInertiaMatrices = ...                    % calculate transformed inertia matrices
+                calculateTransformedLinkInertiaMatrices(obj.generalizedInertiaMatrices, obj.referenceLinkTransformations);
             
             % generate marker data container
             obj.markerReferencePositions = cell(obj.numberOfJoints, 1);
