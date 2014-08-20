@@ -18,8 +18,7 @@ classdef KinematicChainStickFigure < handle
             obj.kinematicChain = kinematicChain;
             kinematicChain.updateLinkVisualizationData();
             if nargin < 2
-                obj.sceneBound = [-2; 2; -2; 2; -2; 2]*0.5;
-%                 obj.sceneBound = [-5; 5; -5; 5; -5; 5];
+                obj.sceneBound = [-1; 1; -1; 1; -1; 1];
             else
                 obj.sceneBound = sceneBound;
             end
@@ -75,19 +74,19 @@ classdef KinematicChainStickFigure < handle
             % update data
             obj.kinematicChain.updateLinkVisualizationData();
             
-            % plot joints
+            % update joint plots
             for i_joint = 1 : obj.kinematicChain.numberOfJoints
                 set(obj.jointPlots(i_joint), ...
                         'Xdata', obj.kinematicChain.jointPositions{i_joint}(1), ...
                         'Ydata', obj.kinematicChain.jointPositions{i_joint}(2), ...
                         'Zdata', obj.kinematicChain.jointPositions{i_joint}(3))
             end
-            % plot end-effector
+            % update end-effector plots
             set(obj.endEffectorPlot, ...
                     'Xdata', obj.kinematicChain.endEffectorPosition(1), ...
                     'Ydata', obj.kinematicChain.endEffectorPosition(2), ...
                     'Zdata', obj.kinematicChain.endEffectorPosition(3));
-            % plot links
+            % update links plots
             for i_joint = 1 : obj.kinematicChain.numberOfJoints
                 % lines
                 for i_line = 1 : size(obj.kinematicChain.linkVisualizationReferenceData(i_joint).startPoints, 2)
@@ -122,7 +121,7 @@ classdef KinematicChainStickFigure < handle
                 
             end
 
-            % markers
+            % update marker plots
             for i_joint = 1 : obj.kinematicChain.numberOfJoints
                 for i_marker = 1 : size(obj.kinematicChain.markerPositions{i_joint}, 2)
                     set( ...

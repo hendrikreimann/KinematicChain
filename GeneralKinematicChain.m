@@ -1,6 +1,3 @@
-
-
-
 classdef GeneralKinematicChain < KinematicChain
     properties
         % reference data
@@ -40,8 +37,6 @@ classdef GeneralKinematicChain < KinematicChain
                 linkMasses = 1;
                 linkMomentsOfInertia = [1 1 1];
             end
-            
-            
             degrees_of_freedom = length(jointPositions);
             obj = obj@KinematicChain(degrees_of_freedom);
             obj.linkMasses = linkMasses;
@@ -165,7 +160,7 @@ classdef GeneralKinematicChain < KinematicChain
                     obj.markerPositions{i_joint}(:, i_marker) = current_position;
                 end
             end
-        end        
+        end
         function addMarker(obj, joint_index, marker_reference_position)
             obj.markerReferencePositions{joint_index} = [obj.markerReferencePositions{joint_index} [marker_reference_position; 1]];
             obj.markerPositions{joint_index} = [obj.markerPositions{joint_index} zeros(4, 1)];
@@ -452,6 +447,13 @@ classdef GeneralKinematicChain < KinematicChain
 %   mTransformationsLock.unlock();
 % }
             
+        end
+        function com = calculateCenterOfMassPosition(obj)
+            com = [0; 0; 0];
+            for i_joint = 1 : obj.numberOfJoints
+                com = com + obj.linkTransformations{i_joint}(1:3, 4) * obj.linkMasses(i_joint);
+            end
+            com = com * (1 / sum(obj.linkMasses));
         end
     end
 end

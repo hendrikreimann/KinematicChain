@@ -1,7 +1,4 @@
-
-
-
-classdef generalKinematicTree < kinematicTree
+classdef GeneralKinematicTree < KinematicTree
     properties
         % reference data
         referenceJointTwists;
@@ -10,6 +7,7 @@ classdef generalKinematicTree < kinematicTree
         referenceLinkTransformations;
         transformedLinkInertiaMatrices;
         generalizedInertiaMatrices;
+        markerReferencePositions;
         
         % screw geometry data
         twistExponentials
@@ -22,35 +20,63 @@ classdef generalKinematicTree < kinematicTree
         inverseInterAdjoints
         inertiaMatrixPartialDerivatives
         spatialJacobian
+        spatialJacobianTemporalDerivative
         linkJacobians
+        
+        % visualization data
+        linkVisualizationReferenceData
     end
     methods
-        function obj = generalKinematicTree(jointPositions, jointAxes, branchMatrix, endEffectorPositions, linkCenters, linkMasses, linkMomentsOfInertia)
+        function obj = GeneralKinematicTree(jointPositions, jointAxes, jointTypes, branchMatrix, endEffectorPositions, linkCenters, linkMasses, linkMomentsOfInertia)
+            if nargin == 0
+                jointPositions = {[0; 0; 0]};
+                jointAxes = {[0; 0; 1]};
+                jointTypes = 1;
+                endEffectorPositions = {[2; 0; 0]};
+                linkCenters = {[1; 0; 0]};
+                linkMasses = 1;
+                linkMomentsOfInertia = [1 1 1];
+            end
             degrees_of_freedom = length(jointPositions);
-            obj = obj@kinematicTree(degrees_of_freedom, branchMatrix);
+            obj = obj@KinematicTree(degrees_of_freedom, branchMatrix);
             obj.linkMasses = linkMasses;
             
             % generate references
             for i_joint = 1 : degrees_of_freedom
                 obj.referenceJointTransformations{i_joint} = createReferenceTransformation(jointPositions{i_joint}, eye(3));
-                obj.referenceJointTwists{i_joint} = createTwist(jointPositions{i_joint}, jointAxes{i_joint});
+                obj.referenceJointTwists{i_joint} = createTwist(jointPositions{i_joint}, jointAxes{i_joint}, jointTypes(i_joint));
             end
             for i_eef = 1 : obj.numberOfBranches
                 obj.referenceEndEffectorTransformations{i_eef} = createReferenceTransformation(endEffectorPositions{i_eef}, eye(3));
             end
-            
-            
-            
-            if nargin > 4
-                for i_joint = 1 : degrees_of_freedom
-                    obj.referenceLinkTransformations{i_joint} = createReferenceTransformation(linkCenters{i_joint}, eye(3));
-                    obj.generalizedInertiaMatrices{i_joint} = generalizedInertiaMatrix(linkMasses(i_joint), linkMomentsOfInertia(i_joint, :));
-                end
-                obj.transformedLinkInertiaMatrices = ...                    % calculate transformed inertia matrices
-                    calculateTransformedLinkInertiaMatrices(obj.generalizedInertiaMatrices, obj.referenceLinkTransformations);
+            for i_joint = 1 : degrees_of_freedom
+                obj.referenceLinkTransformations{i_joint} = createReferenceTransformation(linkCenters{i_joint}, eye(3));
+                obj.generalizedInertiaMatrices{i_joint} = generalizedInertiaMatrix(linkMasses(i_joint), linkMomentsOfInertia(i_joint, :));
             end
+            obj.transformedLinkInertiaMatrices = ...                    % calculate transformed inertia matrices
+                calculateTransformedLinkInertiaMatrices(obj.generalizedInertiaMatrices, obj.referenceLinkTransformations);
             
+            % generate marker data container
+            obj.markerReferencePositions = cell(obj.numberOfJoints, 1);
+
+            obj.updateInternals();
             
+            % generate link visualization data
+            obj.linkVisualizationReferenceData = struct([]);
+            for i_joint = 1 : obj.numberOfJoints-1
+                start_point = obj.jointTransformations{i_joint}(1:3, 4);
+                end_point = obj.jointTransformations{i_joint+1}(1:3, 4);
+                obj.linkVisualizationData(i_joint).startPoints(:, 1) = start_point;
+                obj.linkVisualizationData(i_joint).endPoints(:, 1) = end_point;
+                obj.linkVisualizationReferenceData(i_joint).startPoints(:, 1) = start_point;
+                obj.linkVisualizationReferenceData(i_joint).endPoints(:, 1) = end_point;
+            end
+%             start_point = obj.jointTransformations{obj.numberOfJoints}(1:3, 4);
+%             end_point = obj.endEffectorTransformation(1:3, 4);
+%             obj.linkVisualizationData(obj.numberOfJoints).startPoints(:, 1) = start_point;
+%             obj.linkVisualizationData(obj.numberOfJoints).endPoints(:, 1) = end_point;
+%             obj.linkVisualizationReferenceData(obj.numberOfJoints).startPoints(:, 1) = start_point;
+%             obj.linkVisualizationReferenceData(obj.numberOfJoints).endPoints(:, 1) = end_point;            
             
             
         end
@@ -74,7 +100,6 @@ classdef generalKinematicTree < kinematicTree
             end
             obj.calculateEndEffectorVelocities();
             
-            
             % calculate things needed for inertia and coriolis/centrifugal matrix
             obj.calculateLinkTransformations();
             obj.calculateInterTransformations();
@@ -88,34 +113,66 @@ classdef generalKinematicTree < kinematicTree
             obj.calculateLinkJacobians();
             obj.calculateGravitationMatrix();
             
+            % update second-order temporal derivatives
+%             obj.calculateSpatialJacobianTemporalDerivative();
+%             obj.calculateEndEffectorAcceleration();
+%             obj.calculateEndEffectorJacobianTemporalDerivative();
             
-            
-            return
-            
+            % update marker positions
+            for i_joint = 1 : obj.numberOfJoints
+                joint_transformation = obj.productsOfExponentials{i_joint};
+                for i_marker = 1 : size(obj.markerReferencePositions{i_joint}, 2)
+                    current_position = joint_transformation * obj.markerReferencePositions{i_joint}(:, i_marker);
+                    obj.markerPositions{i_joint}(:, i_marker) = current_position;
+                end
+            end
 
-
+            
+        end
+        function updateKinematics(obj)
+            % update geometric transformations
+            obj.calculateTwistExponentials();
+            obj.calculateProductsOfExponentials();
+            obj.calculateJointTransformations();
+            obj.calculateEndEffectorTransformations();
+            
             % update Jacobians
-            obj.linkJacobians = calculateLinkJacobians(obj.spatialJacobian, obj.linkTransformations);
+            obj.calculateSpatialJacobian();
+            obj.calculateEndEffectorJacobians();
             
-
-            % update coriolis and gravitation matrices
-            obj.coriolisMatrix = calculateCoriolisMatrix(obj.inertiaMatrixPartialDerivatives, obj.jointVelocities);
-            obj.gravitationalTorqueMatrix = calculateGravitationMatrix(obj.linkJacobians, obj.linkMasses);
+            % update dependent variables
+            for i_joint = 1 : obj.numberOfJoints
+                obj.jointPositions{i_joint} = obj.jointTransformations{i_joint}(1:3, 4);
+            end
+            for i_eef = 1 : obj.numberOfBranches
+                obj.endEffectorPositions{i_eef} = obj.endEffectorTransformations{i_eef}(1:3, 4);
+            end
+            obj.calculateEndEffectorVelocities();
             
-            % update functionals
-%             obj.endEffectorPosition = obj.jointTransformations{ obj.numberOfJoints + 1 }(1:3, 4);
-            obj.endEffectorVelocity = obj.endEffectorJacobian * obj.jointVelocities;
-            obj.endEffectorAcceleration = calculateEndEffectorAcceleration ...
-                                            (...
-                                                obj.jointTransformations, ...
-                                                obj.referenceJointTwists, ...
-                                                obj.productsOfExponentials, ...
-                                                obj.twistExponentials, ...
-                                                obj.referenceJointTwists, ...
-                                                obj.jointVelocities, ...
-                                                obj.jointAccelerations ...
-                                           );
+            % calculate things needed for inertia and coriolis/centrifugal matrix
+            obj.calculateLinkTransformations();
+            obj.calculateInterTransformations();
+            obj.calculateInterAdjoints();
+            obj.calculateInverseInterAdjoints();
             
+            % update second-order temporal derivatives
+%             obj.calculateSpatialJacobianTemporalDerivative();
+%             obj.calculateEndEffectorAcceleration();
+%             obj.calculateEndEffectorJacobianTemporalDerivative();
+            
+            % update marker positions
+            for i_joint = 1 : obj.numberOfJoints
+                joint_transformation = obj.productsOfExponentials{i_joint};
+                for i_marker = 1 : size(obj.markerReferencePositions{i_joint}, 2)
+                    current_position = joint_transformation * obj.markerReferencePositions{i_joint}(:, i_marker);
+                    obj.markerPositions{i_joint}(:, i_marker) = current_position;
+                end
+            end
+        end
+        function addMarker(obj, joint_index, marker_reference_position)
+            obj.markerReferencePositions{joint_index} = [obj.markerReferencePositions{joint_index} [marker_reference_position; 1]];
+            obj.markerPositions{joint_index} = [obj.markerPositions{joint_index} zeros(4, 1)];
+            obj.markerExportMap = [obj.markerExportMap [joint_index; size(obj.markerPositions{joint_index}, 2)]];
         end
         function calculateTwistExponentials(obj)
             % calculate the twist exponentials from the current joint
@@ -326,6 +383,127 @@ classdef generalKinematicTree < kinematicTree
                 end
                 obj.gravitationalTorqueMatrix(k_joint) = 9.81 * N_k;
             end
+        end
+%         function calculateSpatialJacobianTemporalDerivative(obj)
+%             for j_joint = 1 : obj.numberOfJoints
+%                 % g = exp(xiHat_1*theta_1)*...*exp(xiHat_{j-1}*theta_{j-1}) 
+%                 %       * xiHat_j 
+%                 %       * exp(-xiHat_{j-1}*theta_{j-1})*...*exp(xiHat_1*theta_1)
+%                 % this is a product with 2 * (j-1) factors depending upon time
+%                 % its derivative is a sum with 2 * (j-1) summands
+% 
+%                 g = zeros(4, 4);
+%                 for k_joint = 1 : j_joint-1
+%                     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                     % the k-th summand, deriving the factor with positive sign theta_k
+%                     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                     s_k = eye(4, 4); % the summand where the factor with the positive sign theta_k is derived
+% 
+%                     % factors before the k-th
+%                     for i_joint = 1 : k_joint-1
+%                         % i-th factor stays the same for i < k
+%                         s_k = s_k * obj.twistExponentials{i_joint};
+% 
+%                     end
+%                     % k-th factor is derived by time
+%                     s_k = s_k * twistCoordinatesToMatrix(obj.referenceJointTwists{k_joint}) * obj.twistExponentials{k_joint};
+%                     % factors after the k-th
+%                     for i_joint = k_joint+1 : j_joint-1
+%                         % i-th factor stays the same for i > k
+%                         s_k = s_k * obj.twistExponentials{i_joint};
+% 
+%                 %         if (jointIndex == 3) && (k == 2)
+%                 %             disp(['j = ' num2str(i)]);
+%                 %             disp(num2str(s_k));
+%                 %         end
+%                     end
+%                     s_k = s_k * twistCoordinatesToMatrix(obj.referenceJointTwists{j_joint}) * obj.productsOfExponentials{j_joint-1}^(-1);
+% 
+%                     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                     % the (2*(j-1)-k)-th summand, deriving the factor with negative sign theta_k
+%                     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                     t_k = obj.productsOfExponentials{j_joint-1} * twistCoordinatesToMatrix(obj.referenceJointTwists{j_joint}); 
+%                     % the summand where the factor with the negative sign theta_k is derived
+%                     for i_joint = j_joint-1 : -1 : k_joint+1
+%                         % i-th factor stays the same for i > k
+%                         t_k = t_k * obj.twistExponentials{i_joint}^(-1);
+%                     end
+%                     t_k = t_k * twistCoordinatesToMatrix(obj.referenceJointTwists{k_joint}) * obj.twistExponentials{k_joint}^(-1);
+%                     for i_joint = k_joint-1 : -1 : 1
+%                         % i-th factor stays the same for i < k
+%                         t_k = t_k * obj.twistExponentials{i_joint}^(-1);
+%                     end
+% 
+%                     % add this summand to the sum
+%                     g = g + obj.jointVelocities(k_joint)*(s_k - t_k);
+%                 end
+% 
+%                 obj.spatialJacobianTemporalDerivative(:, j_joint) = twistMatrixToCoordinates(g);
+%             end
+%         end
+%         function calculateEndEffectorAcceleration(obj)
+%             T1 = obj.spatialJacobianTemporalDerivative * obj.jointVelocities;
+%             T2 = obj.spatialJacobian * obj.jointAccelerations;
+%             S1 = twistCoordinatesToMatrix(T1 + T2) * [obj.endEffectorPosition; 1];
+%             S2 = twistCoordinatesToMatrix(obj.spatialJacobian * obj.jointVelocities) * [obj.endEffectorVelocity; 0];
+%             end_effector_acceleration = S1 + S2;
+%             obj.endEffectorAcceleration = end_effector_acceleration(1:3);
+%         end
+        function updateLinkVisualizationData(obj)
+            for i_joint = 1 : obj.numberOfJoints
+                for i_line = 1 : size(obj.linkVisualizationReferenceData(i_joint).startPoints, 2)
+                    start_point_reference = [obj.linkVisualizationReferenceData(i_joint).startPoints(:, i_line); 1];
+                    start_point_current = obj.productsOfExponentials{i_joint} * start_point_reference;
+                    obj.linkVisualizationData(i_joint).startPoints(:, i_line) = start_point_current(1:3);
+                    end_point_reference = [obj.linkVisualizationReferenceData(i_joint).endPoints(:, i_line); 1];
+                    end_point_current = obj.productsOfExponentials{i_joint} * end_point_reference;
+                    obj.linkVisualizationData(i_joint).endPoints(:, i_line) = end_point_current(1:3);
+                end
+            end
+        end
+%         function calculateEndEffectorJacobianTemporalDerivative(obj)
+%             end_effector_position = [obj.endEffectorPosition; 1];
+%             end_effector_velocity = [obj.endEffectorVelocity; 0];
+%             for j_joint = 1 : obj.numberOfJoints
+%                 S1 = twistCoordinatesToMatrix(obj.spatialJacobianTemporalDerivative(:, j_joint)) * end_effector_position;
+%                 S2 = twistCoordinatesToMatrix(obj.spatialJacobian(:, j_joint)) * end_effector_velocity;
+%                 column = S1 + S2;
+%                 obj.endEffectorJacobianTemporalDerivative(:, j_joint) = column(1:3);
+%             end
+%             
+%             
+%             
+% 
+% %   cv::Mat column;
+% %   cv::Mat S1;
+% %   cv::Mat S2;
+% %   mTransformationsLock.lockForRead();
+% %   for (unsigned int j = 0; j <= jointIndex; j++)
+% %   {
+% %     S1 = cedar::aux::math::wedgeTwist<double>(calculateTwistTemporalDerivative(j)) * point_world;
+% %     S2 = cedar::aux::math::wedgeTwist<double>
+% %          (
+% %            cedar::aux::math::rigidToAdjointTransformation<double>(mpRootCoordinateFrame->getTransformation())
+% %            *mJointTwists[j]
+% %          )
+% %          * calculateVelocity(point_world, jointIndex, WORLD_COORDINATES);
+% % 
+% %     column = S1 + S2;
+% %     // export
+% %     result.at<double>(0, j) = column.at<double>(0, 0);
+% %     result.at<double>(1, j) = column.at<double>(1, 0);
+% %     result.at<double>(2, j) = column.at<double>(2, 0);
+% %   }
+% %   mTransformationsLock.unlock();
+% % }
+%             
+%         end
+        function com = calculateCenterOfMassPosition(obj)
+            com = [0; 0; 0];
+            for i_joint = 1 : obj.numberOfJoints
+                com = com + obj.linkTransformations{i_joint}(1:3, 4) * obj.linkMasses(i_joint);
+            end
+            com = com * (1 / sum(obj.linkMasses));
         end
     end
 end

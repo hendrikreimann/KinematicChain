@@ -1,6 +1,3 @@
-
-
-
 classdef KinematicChain < handle
     properties
         % reference data
@@ -10,21 +7,17 @@ classdef KinematicChain < handle
         jointAngles;
         jointVelocities;
         jointAccelerations;
-        externalTorques;
-        constraintTorques;
         
         % dynamic variables
         linkMasses;
         inertiaMatrix;
         coriolisMatrix;
         gravitationalTorqueMatrix;
+        externalTorques;
+        constraintTorques;
         
         % dependent variables - joints
         jointPositions;
-        
-        % markers
-        markerPositions;
-        markerExportMap;
         
         % dependent variables - end-effector
         endEffectorPosition
@@ -32,6 +25,10 @@ classdef KinematicChain < handle
         endEffectorAcceleration
         endEffectorJacobian
         endEffectorJacobianTemporalDerivative
+        
+        % markers
+        markerPositions;
+        markerExportMap;
         
         % visualization data
         linkVisualizationData
