@@ -14,7 +14,7 @@ classdef KinematicTreeStickFigure < handle
         endEffectorVelocityPlots;
         miscellaneousPlots;
         markerPlots;
-        
+        markerConnectionLinePlots;
     end 
     methods
         function obj = KinematicTreeStickFigure(kinematicTree, sceneBound)
@@ -28,9 +28,9 @@ classdef KinematicTreeStickFigure < handle
             obj.sceneFigure = figure( 'Position', [ 1250, 1100, 400, 400 ], 'Name', 'scene' );
             obj.sceneAxes = axes( 'Position', [ 0.1 0.1 0.8 0.8 ]);
             axis equal; hold on;
-            plot3([obj.sceneBound(1), obj.sceneBound(2)], [0, 0], [0, 0], 'color','k','Linewidth', 1, 'Linestyle',':');
-            plot3([0, 0], [obj.sceneBound(3), obj.sceneBound(4)], [0, 0], 'color','k','Linewidth', 1, 'Linestyle',':');
-            plot3([0, 0], [0, 0], [obj.sceneBound(5), obj.sceneBound(6)], 'color','k','Linewidth', 1, 'Linestyle',':');
+            plot3([obj.sceneBound(1), obj.sceneBound(2)], [0, 0], [0, 0], 'color', 'k','Linewidth', 1, 'Linestyle',':');
+            plot3([0, 0], [obj.sceneBound(3), obj.sceneBound(4)], [0, 0], 'color', 'k','Linewidth', 1, 'Linestyle',':');
+            plot3([0, 0], [0, 0], [obj.sceneBound(5), obj.sceneBound(6)], 'color', 'k','Linewidth', 1, 'Linestyle',':');
 
             % set up joint plots
             obj.jointPlots = zeros(1, kinematicTree.numberOfJoints);
@@ -42,7 +42,7 @@ classdef KinematicTreeStickFigure < handle
             obj.linkPlots = zeros(1, kinematicTree.numberOfJoints);
             for i_joint = 1 : kinematicTree.numberOfJoints
                 obj.linkPlots(i_joint) = plot([0, 0], [0, 0], 'color', 'b', 'Linewidth', 2, 'Linestyle', '-');
-                obj.linkCenterPlots(i_joint) = plot([0, 0], [0, 0], 'color', 'm', 'Linewidth', 2, 'Linestyle', 'x');
+                obj.linkCenterPlots(i_joint) = plot([0, 0], [0, 0], 'color', 'm', 'Linewidth', 2, 'Marker', 'x');
             end
             % TODO: port the support for arbitrary lines from the KinematicTree
             
@@ -60,12 +60,16 @@ classdef KinematicTreeStickFigure < handle
             
             % set up marker plots
             obj.markerPlots = cell(kinematicTree.numberOfJoints, 1);
+            marker_index = 0;
             for i_joint = 1 : kinematicTree.numberOfJoints
                 for i_marker = 1 : size(kinematicTree.markerPositions{i_joint}, 2)
-                    obj.markerPlots{i_joint}(i_marker) = plot3(0, 0, 0, 'color', 'g', 'Linewidth', 1, 'Marker', '.');
+                    marker_index = marker_index + 1;
+                    obj.markerPlots{i_joint}(i_marker) = plot3(0, 0, 0, 'color', obj.kinematicTree.markerVisualizationColors(marker_index, :), 'Linewidth', 2, 'Marker', 'h');
                 end
             end
-            
+            for i_line = 1 : size(kinematicTree.markerConnectionLineIndices, 1)
+                obj.markerConnectionLinePlots(i_line) = plot3([0 0], [0 0], [0 0], 'k', 'linewidth', 1);
+            end
             
             % groom
             set(gca,'xlim',[obj.sceneBound(1), obj.sceneBound(2)],'ylim',[obj.sceneBound(3), obj.sceneBound(4)]);
@@ -132,7 +136,18 @@ classdef KinematicTreeStickFigure < handle
                        )
                 end
             end
-                
+            for i_line = 1 : length(obj.markerConnectionLinePlots)
+                joint_index_marker_one = obj.kinematicTree.markerExportMap(1, obj.kinematicTree.markerConnectionLineIndices(i_line, 1));
+                marker_index_marker_one = obj.kinematicTree.markerExportMap(2, obj.kinematicTree.markerConnectionLineIndices(i_line, 1));
+                joint_index_marker_two = obj.kinematicTree.markerExportMap(1, obj.kinematicTree.markerConnectionLineIndices(i_line, 2));
+                marker_index_marker_two = obj.kinematicTree.markerExportMap(2, obj.kinematicTree.markerConnectionLineIndices(i_line, 2));
+                set( ...
+                     obj.markerConnectionLinePlots(i_line), ...
+                        'Xdata', [obj.kinematicTree.markerPositions{joint_index_marker_one}(1, marker_index_marker_one) obj.kinematicTree.markerPositions{joint_index_marker_two}(1, marker_index_marker_two)], ...
+                        'Ydata', [obj.kinematicTree.markerPositions{joint_index_marker_one}(2, marker_index_marker_one) obj.kinematicTree.markerPositions{joint_index_marker_two}(2, marker_index_marker_two)], ...
+                        'Zdata', [obj.kinematicTree.markerPositions{joint_index_marker_one}(3, marker_index_marker_one) obj.kinematicTree.markerPositions{joint_index_marker_two}(3, marker_index_marker_two)] ...
+                   )
+            end
             
             
         end        
@@ -143,6 +158,13 @@ classdef KinematicTreeStickFigure < handle
                 obj.miscellaneousPlots(index) = plot3(obj.sceneAxes, [0 1], [0 1], [0 0], 'color', color, 'Linewidth', 1, 'Linestyle', '-');
                 obj.update();
             end
+        end
+        function setMarkerColor(obj, joint_index, marker_index, color)
+            set(obj.markerPlots{joint_index}(marker_index), 'color', color);
+            obj.update();
+        end
+        function color = getMarkerColor(obj, joint_index, marker_index)
+            color = get(obj.markerPlots{joint_index}(marker_index), 'color');
         end
     end
 end

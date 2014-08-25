@@ -96,6 +96,7 @@ classdef KinematicTree < handle
             obj.jointVelocities = zeros(degreesOfFreedom, 1);
             obj.jointAccelerations = zeros(degreesOfFreedom, 1);
             obj.externalTorques = zeros(degreesOfFreedom, 1);
+            obj.constraintTorques = zeros(degreesOfFreedom, 1);
             
             obj.inertiaMatrix = zeros(degreesOfFreedom);
             obj.coriolisMatrix = zeros(degreesOfFreedom);

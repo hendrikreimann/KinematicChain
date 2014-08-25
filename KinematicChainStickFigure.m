@@ -139,7 +139,15 @@ classdef KinematicChainStickFigure < handle
             if index > length(obj.miscellaneousPlots)
                 error('index larger than number of miscellaneous plots')
             else
-                obj.miscellaneousPlots(index) = plot3(obj.sceneAxes, [0 1], [0 1], [0 0], 'color', color, 'Linewidth', 1, 'Linestyle', '-');
+                set(obj.miscellaneousPlots(index), 'color', color);
+                obj.update();
+            end
+        end
+        function setMarkerColor(obj, index, color)
+            if index > length(obj.markerPlots)
+                error('index larger than number of marker plots')
+            else
+                set(obj.markerPlots(index), 'color', color);
                 obj.update();
             end
         end

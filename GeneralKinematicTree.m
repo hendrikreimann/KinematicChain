@@ -25,6 +25,8 @@ classdef GeneralKinematicTree < KinematicTree
         
         % visualization data
         linkVisualizationReferenceData
+        markerVisualizationColors
+        markerConnectionLineIndices;
     end
     methods
         function obj = GeneralKinematicTree(jointPositions, jointAxes, jointTypes, branchMatrix, endEffectorPositions, linkCenters, linkMasses, linkMomentsOfInertia)
@@ -32,6 +34,7 @@ classdef GeneralKinematicTree < KinematicTree
                 jointPositions = {[0; 0; 0]};
                 jointAxes = {[0; 0; 1]};
                 jointTypes = 1;
+                branchMatrix = 1;
                 endEffectorPositions = {[2; 0; 0]};
                 linkCenters = {[1; 0; 0]};
                 linkMasses = 1;
@@ -63,6 +66,7 @@ classdef GeneralKinematicTree < KinematicTree
             
             % generate link visualization data
             obj.linkVisualizationReferenceData = struct([]);
+            obj.markerVisualizationColors = [];
             for i_joint = 1 : obj.numberOfJoints-1
                 start_point = obj.jointTransformations{i_joint}(1:3, 4);
                 end_point = obj.jointTransformations{i_joint+1}(1:3, 4);
@@ -169,10 +173,22 @@ classdef GeneralKinematicTree < KinematicTree
                 end
             end
         end
-        function addMarker(obj, joint_index, marker_reference_position)
+        function addMarker(obj, joint_index, marker_reference_position, visualization_color)
+            if nargin < 4
+                visualization_color = rand(1, 3);
+            end
             obj.markerReferencePositions{joint_index} = [obj.markerReferencePositions{joint_index} [marker_reference_position; 1]];
             obj.markerPositions{joint_index} = [obj.markerPositions{joint_index} zeros(4, 1)];
             obj.markerExportMap = [obj.markerExportMap [joint_index; size(obj.markerPositions{joint_index}, 2)]];
+            obj.markerVisualizationColors = [obj.markerVisualizationColors; visualization_color];
+        end
+        function addMarkerConnectionLineBody(obj, marker_indices)
+            number_of_markers = length(marker_indices);
+            for i_start_marker = 1 : number_of_markers
+                for i_target_marker = i_start_marker+1 : number_of_markers
+                    obj.markerConnectionLineIndices = [obj.markerConnectionLineIndices; marker_indices(i_start_marker) marker_indices(i_target_marker)];
+                end
+            end
         end
         function calculateTwistExponentials(obj)
             % calculate the twist exponentials from the current joint
@@ -450,16 +466,16 @@ classdef GeneralKinematicTree < KinematicTree
 %             obj.endEffectorAcceleration = end_effector_acceleration(1:3);
 %         end
         function updateLinkVisualizationData(obj)
-            for i_joint = 1 : obj.numberOfJoints
-                for i_line = 1 : size(obj.linkVisualizationReferenceData(i_joint).startPoints, 2)
-                    start_point_reference = [obj.linkVisualizationReferenceData(i_joint).startPoints(:, i_line); 1];
-                    start_point_current = obj.productsOfExponentials{i_joint} * start_point_reference;
-                    obj.linkVisualizationData(i_joint).startPoints(:, i_line) = start_point_current(1:3);
-                    end_point_reference = [obj.linkVisualizationReferenceData(i_joint).endPoints(:, i_line); 1];
-                    end_point_current = obj.productsOfExponentials{i_joint} * end_point_reference;
-                    obj.linkVisualizationData(i_joint).endPoints(:, i_line) = end_point_current(1:3);
-                end
-            end
+%             for i_joint = 1 : obj.numberOfJoints
+%                 for i_line = 1 : size(obj.linkVisualizationReferenceData(i_joint).startPoints, 2)
+%                     start_point_reference = [obj.linkVisualizationReferenceData(i_joint).startPoints(:, i_line); 1];
+%                     start_point_current = obj.productsOfExponentials{i_joint} * start_point_reference;
+%                     obj.linkVisualizationData(i_joint).startPoints(:, i_line) = start_point_current(1:3);
+%                     end_point_reference = [obj.linkVisualizationReferenceData(i_joint).endPoints(:, i_line); 1];
+%                     end_point_current = obj.productsOfExponentials{i_joint} * end_point_reference;
+%                     obj.linkVisualizationData(i_joint).endPoints(:, i_line) = end_point_current(1:3);
+%                 end
+%             end
         end
 %         function calculateEndEffectorJacobianTemporalDerivative(obj)
 %             end_effector_position = [obj.endEffectorPosition; 1];
