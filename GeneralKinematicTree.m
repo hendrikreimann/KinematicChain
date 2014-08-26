@@ -25,8 +25,7 @@ classdef GeneralKinematicTree < KinematicTree
         
         % visualization data
         linkVisualizationReferenceData
-        markerVisualizationColors
-        markerConnectionLineIndices;
+        markerConnectionLineIndices
     end
     methods
         function obj = GeneralKinematicTree(jointPositions, jointAxes, jointTypes, branchMatrix, endEffectorPositions, linkCenters, linkMasses, linkMomentsOfInertia)
@@ -66,7 +65,6 @@ classdef GeneralKinematicTree < KinematicTree
             
             % generate link visualization data
             obj.linkVisualizationReferenceData = struct([]);
-            obj.markerVisualizationColors = [];
             for i_joint = 1 : obj.numberOfJoints-1
                 start_point = obj.jointTransformations{i_joint}(1:3, 4);
                 end_point = obj.jointTransformations{i_joint+1}(1:3, 4);
@@ -75,12 +73,6 @@ classdef GeneralKinematicTree < KinematicTree
                 obj.linkVisualizationReferenceData(i_joint).startPoints(:, 1) = start_point;
                 obj.linkVisualizationReferenceData(i_joint).endPoints(:, 1) = end_point;
             end
-%             start_point = obj.jointTransformations{obj.numberOfJoints}(1:3, 4);
-%             end_point = obj.endEffectorTransformation(1:3, 4);
-%             obj.linkVisualizationData(obj.numberOfJoints).startPoints(:, 1) = start_point;
-%             obj.linkVisualizationData(obj.numberOfJoints).endPoints(:, 1) = end_point;
-%             obj.linkVisualizationReferenceData(obj.numberOfJoints).startPoints(:, 1) = start_point;
-%             obj.linkVisualizationReferenceData(obj.numberOfJoints).endPoints(:, 1) = end_point;            
             
             
         end
@@ -177,10 +169,23 @@ classdef GeneralKinematicTree < KinematicTree
             if nargin < 4
                 visualization_color = rand(1, 3);
             end
-            obj.markerReferencePositions{joint_index} = [obj.markerReferencePositions{joint_index} [marker_reference_position; 1]];
-            obj.markerPositions{joint_index} = [obj.markerPositions{joint_index} zeros(4, 1)];
-            obj.markerExportMap = [obj.markerExportMap [joint_index; size(obj.markerPositions{joint_index}, 2)]];
-            obj.markerVisualizationColors = [obj.markerVisualizationColors; visualization_color];
+            if joint_index == 0
+                obj.fixedMarkerPositions = [obj.fixedMarkerPositions marker_reference_position];
+                obj.markerExportMap = [obj.markerExportMap [joint_index; size(obj.fixedMarkerPositions, 2)]];
+                obj.fixedMarkerVisualizationColors = [obj.fixedMarkerVisualizationColors; visualization_color];
+            else
+                obj.markerReferencePositions{joint_index} = [obj.markerReferencePositions{joint_index} [marker_reference_position; 1]];
+                obj.markerPositions{joint_index} = [obj.markerPositions{joint_index} zeros(4, 1)];
+                obj.markerExportMap = [obj.markerExportMap [joint_index; size(obj.markerPositions{joint_index}, 2)]];
+                obj.markerVisualizationColors{joint_index} = [obj.markerVisualizationColors{joint_index}; visualization_color];
+            end
+        end
+        function color = getMarkerVisualizationColor(obj, jointIndex, markerIndex)
+            if jointIndex == 0
+                color = obj.fixedMarkerVisualizationColors(markerIndex, :);
+            else
+                color = obj.markerVisualizationColors{jointIndex}(markerIndex, :);
+            end
         end
         function addMarkerConnectionLineBody(obj, marker_indices)
             number_of_markers = length(marker_indices);

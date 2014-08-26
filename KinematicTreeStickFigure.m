@@ -14,6 +14,7 @@ classdef KinematicTreeStickFigure < handle
         endEffectorVelocityPlots;
         miscellaneousPlots;
         markerPlots;
+        fixedMarkerPlots;
         markerConnectionLinePlots;
     end 
     methods
@@ -60,11 +61,15 @@ classdef KinematicTreeStickFigure < handle
             
             % set up marker plots
             obj.markerPlots = cell(kinematicTree.numberOfJoints, 1);
-            marker_index = 0;
+%             marker_index = 0;
+            for i_marker = 1 : kinematicTree.getNumberOfMarkers(0)
+%                 marker_index = marker_index + 1;
+                obj.fixedMarkerPlots(i_marker) = plot3(0, 0, 0, 'color', obj.kinematicTree.getMarkerVisualizationColor(0, i_marker), 'Linewidth', 2, 'Marker', 'h');
+            end
             for i_joint = 1 : kinematicTree.numberOfJoints
                 for i_marker = 1 : size(kinematicTree.markerPositions{i_joint}, 2)
-                    marker_index = marker_index + 1;
-                    obj.markerPlots{i_joint}(i_marker) = plot3(0, 0, 0, 'color', obj.kinematicTree.markerVisualizationColors(marker_index, :), 'Linewidth', 2, 'Marker', 'h');
+%                     marker_index = marker_index + 1;
+                    obj.markerPlots{i_joint}(i_marker) = plot3(0, 0, 0, 'color', obj.kinematicTree.getMarkerVisualizationColor(i_joint, i_marker), 'Linewidth', 2, 'Marker', 'h');
                 end
             end
             for i_line = 1 : size(kinematicTree.markerConnectionLineIndices, 1)
@@ -126,14 +131,27 @@ classdef KinematicTreeStickFigure < handle
             end
             
             % update marker plots
+            for i_marker = 1 : obj.kinematicTree.getNumberOfMarkers(0)
+                position = obj.kinematicTree.getMarkerPosition(0, i_marker);
+                set( ...
+                     obj.fixedMarkerPlots(i_marker), ...
+                        'Xdata', position(1), ...
+                        'Ydata', position(2), ...
+                        'Zdata', position(3) ...
+                   )
+            end
             for i_joint = 1 : obj.kinematicTree.numberOfJoints
-                for i_marker = 1 : size(obj.kinematicTree.markerPositions{i_joint}, 2)
+                for i_marker = 1 : obj.kinematicTree.getNumberOfMarkers(i_joint)
+                    position = obj.kinematicTree.getMarkerPosition(i_joint, i_marker);
                     set( ...
                          obj.markerPlots{i_joint}(i_marker), ...
-                            'Xdata', obj.kinematicTree.markerPositions{i_joint}(1, i_marker), ...
-                            'Ydata', obj.kinematicTree.markerPositions{i_joint}(2, i_marker), ...
-                            'Zdata', obj.kinematicTree.markerPositions{i_joint}(3, i_marker) ...
+                            'Xdata', position(1), ...
+                            'Ydata', position(2), ...
+                            'Zdata', position(3) ...
                        )
+%                             'Xdata', obj.kinematicTree.markerPositions{i_joint}(1, i_marker), ...
+%                             'Ydata', obj.kinematicTree.markerPositions{i_joint}(2, i_marker), ...
+%                             'Zdata', obj.kinematicTree.markerPositions{i_joint}(3, i_marker) ...
                 end
             end
             for i_line = 1 : length(obj.markerConnectionLinePlots)
@@ -141,12 +159,17 @@ classdef KinematicTreeStickFigure < handle
                 marker_index_marker_one = obj.kinematicTree.markerExportMap(2, obj.kinematicTree.markerConnectionLineIndices(i_line, 1));
                 joint_index_marker_two = obj.kinematicTree.markerExportMap(1, obj.kinematicTree.markerConnectionLineIndices(i_line, 2));
                 marker_index_marker_two = obj.kinematicTree.markerExportMap(2, obj.kinematicTree.markerConnectionLineIndices(i_line, 2));
+                position_marker_one = obj.kinematicTree.getMarkerPosition(joint_index_marker_one, marker_index_marker_one);
+                position_marker_two = obj.kinematicTree.getMarkerPosition(joint_index_marker_two, marker_index_marker_two);
                 set( ...
                      obj.markerConnectionLinePlots(i_line), ...
-                        'Xdata', [obj.kinematicTree.markerPositions{joint_index_marker_one}(1, marker_index_marker_one) obj.kinematicTree.markerPositions{joint_index_marker_two}(1, marker_index_marker_two)], ...
-                        'Ydata', [obj.kinematicTree.markerPositions{joint_index_marker_one}(2, marker_index_marker_one) obj.kinematicTree.markerPositions{joint_index_marker_two}(2, marker_index_marker_two)], ...
-                        'Zdata', [obj.kinematicTree.markerPositions{joint_index_marker_one}(3, marker_index_marker_one) obj.kinematicTree.markerPositions{joint_index_marker_two}(3, marker_index_marker_two)] ...
+                        'Xdata', [position_marker_one(1) position_marker_two(1)], ...
+                        'Ydata', [position_marker_one(2) position_marker_two(2)], ...
+                        'Zdata', [position_marker_one(3) position_marker_two(3)] ...
                    )
+%                         'Xdata', [obj.kinematicTree.markerPositions{joint_index_marker_one}(1, marker_index_marker_one) obj.kinematicTree.markerPositions{joint_index_marker_two}(1, marker_index_marker_two)], ...
+%                         'Ydata', [obj.kinematicTree.markerPositions{joint_index_marker_one}(2, marker_index_marker_one) obj.kinematicTree.markerPositions{joint_index_marker_two}(2, marker_index_marker_two)], ...
+%                         'Zdata', [obj.kinematicTree.markerPositions{joint_index_marker_one}(3, marker_index_marker_one) obj.kinematicTree.markerPositions{joint_index_marker_two}(3, marker_index_marker_two)] ...
             end
             
             
@@ -164,7 +187,11 @@ classdef KinematicTreeStickFigure < handle
             obj.update();
         end
         function color = getMarkerColor(obj, joint_index, marker_index)
-            color = get(obj.markerPlots{joint_index}(marker_index), 'color');
+            if joint_index == 0
+                color = get(obj.fixedMarkerPlots(marker_index), 'color');
+            else
+                color = get(obj.markerPlots{joint_index}(marker_index), 'color');
+            end
         end
     end
 end

@@ -31,11 +31,14 @@ classdef KinematicTree < handle
         endEffectorJacobians;
         
         % markers
+        fixedMarkerPositions;
         markerPositions;
         markerExportMap;
         
         % visualization data
         linkVisualizationData
+        fixedMarkerVisualizationColors
+        markerVisualizationColors
         miscellaneousLinesStartPoints
         miscellaneousLinesEndPoints
         
@@ -89,8 +92,6 @@ classdef KinematicTree < handle
                 end
                 obj.endEffectorParents(i_eef) = parent;
             end
-            
-            
 
             obj.jointAngles = zeros(degreesOfFreedom, 1);
             obj.jointVelocities = zeros(degreesOfFreedom, 1);
@@ -111,7 +112,13 @@ classdef KinematicTree < handle
             
             % generate marker data container
             obj.markerPositions = cell(obj.numberOfJoints, 1);
+            obj.fixedMarkerPositions = [];
             obj.markerExportMap = [];
+            
+            % marker colors
+            obj.fixedMarkerVisualizationColors = [];
+            obj.markerVisualizationColors = cell(obj.numberOfJoints, 1);
+            
             
             % generate link visualization data
             % XXX this does not work for the general case yet, just making
@@ -160,7 +167,11 @@ classdef KinematicTree < handle
             for i_marker = 1 : number_of_markers
                 marker_joint = obj.markerExportMap(1, i_marker);
                 marker_index = obj.markerExportMap(2, i_marker);
-                marker_position = obj.markerPositions{marker_joint}(1:3, marker_index);
+                if marker_joint == 0
+                    marker_position = obj.fixedMarkerPositions(1:3, marker_index);
+                else
+                    marker_position = obj.markerPositions{marker_joint}(1:3, marker_index);
+                end
                 markerPositions(1, 3*(i_marker - 1) + 1 : 3*(i_marker - 1) + 3) = marker_position';                
             end
         end
@@ -184,6 +195,12 @@ classdef KinematicTree < handle
                 exportMapIndices = 3*(export_index-1)+1 : 3*(export_index-1)+3;
             end
         end
-    
+        function position = getMarkerPosition(obj, jointIndex, markerIndex)
+            if jointIndex == 0
+                position = obj.fixedMarkerPositions(:, markerIndex);
+            else
+                position = obj.markerPositions{jointIndex}(:, markerIndex);
+            end
+        end
     end
 end
