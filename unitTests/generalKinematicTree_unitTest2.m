@@ -32,23 +32,23 @@ link_orientations = {eye(3), eye(3), eye(3), eye(3), eye(3)};
 % branch_matrix = [1 1 1 0 0; 1 0 0 1 1]; % each row is a branch, listing the joints that move the end-effector of that branch
 
 % 7 joints
-joint_positions = {[0; 0; 0]; [0; 1; 0]; [1; 1; 0]; [1; 1; 0]; [0; 1; 0]; [-1; 1; 0]; [-1; 1; 0]; };
-joint_axes = {[0; 0; 1], [0; 0; 1], [0; 0; 1], [0; 0; 1], [0; 0; 1], [0; 0; 1], [0; 0; 1]};
-for i_joint = 1 : 7
-    joint_axis = rand(3, 1);
-    joint_axes{i_joint} = joint_axis * 1 / norm(joint_axis);
-end
-joint_types = [1 1 1 1 1 1 1];
-end_effectors = {[1; 2; 0], [2; 1; 0], [-1; 2; 0], [-2; 1; 0]};
-link_positions = {[0; 0.5; 0]; [0.5; 1; 0]; [1; 1.5; 0]; [1.5; 1; 0]; [-0.5; 1; 0]; [-1; 1.5; 0]; [-1.5; 1; 0];};
-link_orientations = {eye(3), eye(3), eye(3), eye(3), eye(3), eye(3), eye(3)};
-branch_matrix = ...
-  [ ...
-    1 1 1 0 0 0 0; ...
-    1 1 0 1 0 0 0; ...
-    1 0 0 0 1 1 0; ...
-    1 0 0 0 1 0 1; ...
-  ];
+% joint_positions = {[0; 0; 0]; [0; 1; 0]; [1; 1; 0]; [1; 1; 0]; [0; 1; 0]; [-1; 1; 0]; [-1; 1; 0]; };
+% joint_axes = {[0; 0; 1], [0; 0; 1], [0; 0; 1], [0; 0; 1], [0; 0; 1], [0; 0; 1], [0; 0; 1]};
+% for i_joint = 1 : 7
+%     joint_axis = rand(3, 1);
+%     joint_axes{i_joint} = joint_axis * 1 / norm(joint_axis);
+% end
+% joint_types = [1 1 1 1 1 1 1];
+% end_effectors = {[1; 2; 0], [2; 1; 0], [-1; 2; 0], [-2; 1; 0]};
+% link_positions = {[0; 0.5; 0]; [0.5; 1; 0]; [1; 1.5; 0]; [1.5; 1; 0]; [-0.5; 1; 0]; [-1; 1.5; 0]; [-1.5; 1; 0];};
+% link_orientations = {eye(3), eye(3), eye(3), eye(3), eye(3), eye(3), eye(3)};
+% branch_matrix = ...
+%   [ ...
+%     1 1 1 0 0 0 0; ...
+%     1 1 0 1 0 0 0; ...
+%     1 0 0 0 1 1 0; ...
+%     1 0 0 0 1 0 1; ...
+%   ];
 
 
 degrees_of_freedom = length(joint_axes);
@@ -107,12 +107,18 @@ delta_t = 0.00000001;
 diff_hand.jointAngles = test_hand.jointAngles + delta_t * test_hand.jointVelocities;
 diff_hand.updateInternals();
 delta_spatialJacobian = diff_hand.spatialJacobian - test_hand.spatialJacobian;
+delta_endE_effector_jacobian_one = diff_hand.endEffectorJacobians{1} - test_hand.endEffectorJacobians{1};
+delta_endE_effector_jacobian_two = diff_hand.endEffectorJacobians{2} - test_hand.endEffectorJacobians{2};
 theta_dot = test_hand.jointVelocities
-% spatialJacobian = test_hand.spatialJacobian
 spatialJacobianTemporalDerivative_numerical = delta_spatialJacobian * delta_t^(-1)
 spatialJacobianTemporalDerivative_analytical = test_hand.spatialJacobianTemporalDerivative
+endEffectorJacobianTemporalDerivative_one_numerical = delta_endE_effector_jacobian_one * delta_t^(-1)
+endEffectorJacobianTemporalDerivative_one_analytical = test_hand.endEffectorJacobianTemporalDerivatives{1}
+endEffectorJacobianTemporalDerivative_two_numerical = delta_endE_effector_jacobian_two * delta_t^(-1)
+endEffectorJacobianTemporalDerivative_two_analytical = test_hand.endEffectorJacobianTemporalDerivatives{2}
 
-% return
+
+return
 
 sceneBound = 3*[-1; 1; -1; 1; -1; 1];
 stickFigure = KinematicTreeStickFigure(test_hand, sceneBound);

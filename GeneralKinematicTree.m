@@ -86,11 +86,6 @@ classdef GeneralKinematicTree < KinematicTree
             obj.calculateLinkJacobians();
             obj.calculateGravitationMatrix();
             
-            % update second-order temporal derivatives
-%             obj.calculateSpatialJacobianTemporalDerivative();
-%             obj.calculateEndEffectorAcceleration();
-%             obj.calculateEndEffectorJacobianTemporalDerivative();
-            
             % update marker positions
             for i_joint = 1 : obj.numberOfJoints
                 joint_transformation = obj.productsOfExponentials{i_joint};
@@ -131,7 +126,7 @@ classdef GeneralKinematicTree < KinematicTree
             % update second-order temporal derivatives
             obj.calculateSpatialJacobianTemporalDerivative();
 %             obj.calculateEndEffectorAcceleration();
-%             obj.calculateEndEffectorJacobianTemporalDerivative();
+            obj.calculateEndEffectorJacobianTemporalDerivative();
             
             % update marker positions
             for i_joint = 1 : obj.numberOfJoints
@@ -463,43 +458,25 @@ classdef GeneralKinematicTree < KinematicTree
 %                 end
 %             end
         end
-%         function calculateEndEffectorJacobianTemporalDerivative(obj)
-%             end_effector_position = [obj.endEffectorPosition; 1];
-%             end_effector_velocity = [obj.endEffectorVelocity; 0];
-%             for j_joint = 1 : obj.numberOfJoints
-%                 S1 = twistCoordinatesToMatrix(obj.spatialJacobianTemporalDerivative(:, j_joint)) * end_effector_position;
-%                 S2 = twistCoordinatesToMatrix(obj.spatialJacobian(:, j_joint)) * end_effector_velocity;
-%                 column = S1 + S2;
-%                 obj.endEffectorJacobianTemporalDerivative(:, j_joint) = column(1:3);
-%             end
-%             
-%             
-%             
-% 
-% %   cv::Mat column;
-% %   cv::Mat S1;
-% %   cv::Mat S2;
-% %   mTransformationsLock.lockForRead();
-% %   for (unsigned int j = 0; j <= jointIndex; j++)
-% %   {
-% %     S1 = cedar::aux::math::wedgeTwist<double>(calculateTwistTemporalDerivative(j)) * point_world;
-% %     S2 = cedar::aux::math::wedgeTwist<double>
-% %          (
-% %            cedar::aux::math::rigidToAdjointTransformation<double>(mpRootCoordinateFrame->getTransformation())
-% %            *mJointTwists[j]
-% %          )
-% %          * calculateVelocity(point_world, jointIndex, WORLD_COORDINATES);
-% % 
-% %     column = S1 + S2;
-% %     // export
-% %     result.at<double>(0, j) = column.at<double>(0, 0);
-% %     result.at<double>(1, j) = column.at<double>(1, 0);
-% %     result.at<double>(2, j) = column.at<double>(2, 0);
-% %   }
-% %   mTransformationsLock.unlock();
-% % }
-%             
-%         end
+        function calculateEndEffectorJacobianTemporalDerivative(obj)
+            for i_eef = 1 : obj.numberOfBranches
+                end_effector_jacobian_temporal_derivative = zeros(size(obj.endEffectorJacobians{i_eef}));
+            
+                end_effector_position = [obj.endEffectorPositions{i_eef}; 1];
+                end_effector_velocity = [obj.endEffectorVelocities{i_eef}; 0];
+                for i_joint = 1 : obj.numberOfJoints
+                    if obj.branchMatrix(i_eef, i_joint);
+                        S1 = twistCoordinatesToMatrix(obj.spatialJacobianTemporalDerivative(:, i_joint)) * end_effector_position;
+                        S2 = twistCoordinatesToMatrix(obj.spatialJacobian(:, i_joint)) * end_effector_velocity;
+                        column = S1 + S2;
+                    else
+                        column = zeros(3, 1);
+                    end
+                    end_effector_jacobian_temporal_derivative(:, i_joint) = column(1:3);                        
+                end
+                obj.endEffectorJacobianTemporalDerivatives{i_eef} = end_effector_jacobian_temporal_derivative;
+            end
+        end
         function com = calculateCenterOfMassPosition(obj)
             com = [0; 0; 0];
             for i_joint = 1 : obj.numberOfJoints

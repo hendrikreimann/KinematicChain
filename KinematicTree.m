@@ -29,6 +29,7 @@ classdef KinematicTree < handle
         endEffectorVelocities;
         endEffectorAccelerations;
         endEffectorJacobians;
+        endEffectorJacobianTemporalDerivatives;
         
         % markers
         fixedMarkerPositions;
@@ -109,6 +110,7 @@ classdef KinematicTree < handle
             obj.endEffectorVelocities = cell(obj.numberOfBranches, 1);
             obj.endEffectorAccelerations = cell(obj.numberOfBranches, 1);
             obj.endEffectorJacobians = cell(obj.numberOfBranches, 1);
+            obj.endEffectorJacobianTemporalDerivatives = cell(obj.numberOfBranches, 1);
             
             % generate marker data container
             obj.markerPositions = cell(obj.numberOfJoints, 1);
