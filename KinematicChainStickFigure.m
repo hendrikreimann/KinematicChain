@@ -43,7 +43,7 @@ classdef KinematicChainStickFigure < handle
                     obj.linkPlots(i_joint).linePlots(i_line) = plot3(0, 0, 0, 'color', 'b', 'Linewidth', 2, 'Linestyle', '-');
                 end
                 if obj.kinematicChain.linkMasses(i_joint) > 0
-                    obj.linkCenterPlots(i_joint) = plot3([0, 0], [0, 0], [0, 0], 'color', 'm', 'Linewidth', 2, 'Linestyle', 'x');
+                    obj.linkCenterPlots(i_joint) = plot3([0, 0], [0, 0], [0, 0], 'color', 'm', 'Linewidth', 2, 'Marker', 'x');
                 end
             end
             

@@ -157,8 +157,12 @@ classdef KinematicTree < handle
             if nargin < 2
                 numberOfMarkers = size(obj.markerExportMap, 2);
             else
-                joint_occurrences = (obj.markerExportMap(1, :) == jointIndex);
-                numberOfMarkers = sum(joint_occurrences);
+                if isempty(obj.markerExportMap)
+                    numberOfMarkers = 0;
+                else
+                    joint_occurrences = (obj.markerExportMap(1, :) == jointIndex);
+                    numberOfMarkers = sum(joint_occurrences);
+                end
             end
         end
         function markerPositions = exportMarkerPositions(obj)

@@ -22,7 +22,7 @@ arm.updateInternals();
 % disp(num2str(arm.coriolisMatrix))
 
 
-stickFigure = SerialChainStickFigure(arm);
+stickFigure = KinematicChainStickFigure(arm);
 stickFigure.update();
 
 
