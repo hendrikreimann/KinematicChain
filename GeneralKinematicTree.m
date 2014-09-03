@@ -38,6 +38,7 @@ classdef GeneralKinematicTree < KinematicTree
                 linkCenters = {[1; 0; 0]};
                 linkMasses = 1;
                 linkMomentsOfInertia = [1 1 1];
+                linkOrientations = {eye(3)};
             end
             degrees_of_freedom = length(jointPositions);
             obj = obj@KinematicTree(degrees_of_freedom, branchMatrix);
@@ -374,7 +375,7 @@ classdef GeneralKinematicTree < KinematicTree
                 for j_joint = 1 : obj.numberOfJoints
                     N_k = N_k + obj.linkMasses(j_joint) * obj.linkJacobians{j_joint}(3, k_joint);
                 end
-                obj.gravitationalTorqueMatrix(k_joint) = 9.81 * N_k;
+                obj.gravitationalTorqueMatrix(k_joint) = obj.gravitationalConstant * N_k;
             end
         end
         function calculateSpatialJacobianTemporalDerivative(obj)
@@ -484,6 +485,29 @@ classdef GeneralKinematicTree < KinematicTree
             end
             com = com * (1 / sum(obj.linkMasses));
         end
+        function Jacobian = calculateArbitraryPointJacobian(obj, point, jointIndex, coordinateFrame)
+            Jacobian = zeros(3, obj.numberOfJoints);
+            if nargin < 4
+                coordinateFrame = 'world';
+            end
+            if strcmp(coordinateFrame, 'world')
+                point_local = obj.jointTransformations{jointIndex}^(-1) * point;
+            elseif strcmp(coordinateFrame, 'local')
+                point_local = point;
+            else
+                error('coordinate frame must be specified as "local" or "world"');
+            end
+            for i_joint = 1 : obj.numberOfJoints
+                point_moved_by_this_joint = obj.connectivityMatrix(i_joint, jointIndex);
+                if i_joint == jointIndex
+                    point_moved_by_this_joint = 1;
+                end
+                joint_twist = twistCoordinatesToMatrix(obj.spatialJacobian(:, i_joint));
+                current_column = joint_twist * obj.jointTransformations{jointIndex} * point_local;
+                Jacobian(:, i_joint) = current_column(1:3) * point_moved_by_this_joint;
+            end
+        end
+            
     end
 end
 

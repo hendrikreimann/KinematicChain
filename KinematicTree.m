@@ -43,6 +43,9 @@ classdef KinematicTree < handle
         miscellaneousLinesStartPoints
         miscellaneousLinesEndPoints
         
+        % adjustable gravitational constant
+        gravitationalConstant = 9.81;
+        
     end
     methods (Abstract)
         updateInternals(obj)
