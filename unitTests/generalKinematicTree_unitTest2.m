@@ -41,38 +41,31 @@ link_orientations = {eye(3), eye(3), eye(3), eye(3), eye(3)};
 % link_orientations = {eye(3), eye(3), eye(3), eye(3), eye(3)};
 
 % 7 joints
-% joint_positions = {[0; 0; 0]; [0; 1; 0]; [1; 1; 0]; [1; 1; 0]; [0; 1; 0]; [-1; 1; 0]; [-1; 1; 0]; };
-% joint_axes = {[0; 0; 1], [0; 0; 1], [0; 0; 1], [0; 0; 1], [0; 0; 1], [0; 0; 1], [0; 0; 1]};
-% joint_types = [1 1 1 1 1 1 1];
-% end_effectors = {[1; 2; 0], [2; 1; 0], [-1; 2; 0], [-2; 1; 0]};
-% % end_effectors = {[1; 2; 0], [-1; 2; 0]};
-% link_positions = {[0; 0.5; 0]; [0.5; 1; 0]; [1; 1.5; 0]; [1.5; 1; 0]; [-0.5; 1; 0]; [-1; 1.5; 0]; [-1.5; 1; 0];};
-% link_orientations = {eye(3), eye(3), eye(3), eye(3), eye(3), eye(3), eye(3)};
-% branch_matrix = ...
-%   [ ...
-%     1 1 1 0 0 0 0; ...
-%     1 1 0 1 0 0 0; ...
-%     1 0 0 0 1 1 0; ...
-%     1 0 0 0 1 0 1; ...
-%   ];
-% % branch_matrix = ...
-% %   [ ...
-% %     1 1 1 1 0 0 0; ...
-% %     1 0 0 0 1 1 1; ...
-% %   ];
+joint_positions = {[0; 0; 0]; [0.5; 0; 0]; [0.5; 0; -1]; [0.5; 0; -1.5]; [-0.5; 0; 0]; [-0.5; 0; -1]; [-0.5; 0; -1.5]; };
+joint_axes = {[0; 1; 0], [0; 1; 0], [0; 1; 0], [0; 1; 0], [0; 1; 0], [0; 1; 0], [0; 1; 0]};
+joint_types = [1 1 1 1 1 1 1];
+end_effectors = {[0.5; 0; -2], [-0.5; 0; -2]};
+link_positions = {[0; 0; 0]; [0.5; 0; -0.5]; [0.5; 0; -1.25]; [0.5; 0; -1.75]; [-0.5; 0; -0.5]; [-0.5; 0; -1.25]; [-0.5; 0; -1.75];};
+link_orientations = {eye(3), eye(3), eye(3), eye(3), eye(3), eye(3), eye(3)};
+branch_matrix = ...
+  [ ...
+    1 1 1 1 0 0 0; ...
+    1 0 0 0 1 1 1; ...
+  ];
 
 reset(RandStream.getGlobalStream);
 
 % randomize joint axes
-for i_joint = 1 : length(joint_axes)
-    joint_axis = rand(3, 1);
-    joint_axes{i_joint} = joint_axis * 1 / norm(joint_axis);
-end
+% for i_joint = 1 : length(joint_axes)
+%     joint_axis = rand(3, 1);
+%     joint_axes{i_joint} = joint_axis * 1 / norm(joint_axis);
+% end
 
 
 degrees_of_freedom = length(joint_axes);
 link_masses = ones(degrees_of_freedom, 1);
-link_moments_of_inertia = ones(degrees_of_freedom, 3) * 0.15;
+% link_moments_of_inertia = ones(degrees_of_freedom, 3) * 0.05;
+link_moments_of_inertia = [[1 5 5] ; repmat([1 1 .5], degrees_of_freedom-1, 1)] * 0.01;
 
 test_hand = GeneralKinematicTree ...
 ( ...
@@ -89,7 +82,7 @@ test_hand = GeneralKinematicTree ...
 
 
 
-test_hand.jointAngles = 3*randn(degrees_of_freedom, 1);
+% test_hand.jointAngles = -.3*randn(degrees_of_freedom, 1);
 % test_hand.jointAngles = 2*ones(degrees_of_freedom, 1);
 
 % test_hand.jointVelocities = [0.2; 0.5; 0.5; -0.5; -0.5];
@@ -102,8 +95,10 @@ test_hand.jointAngles = 3*randn(degrees_of_freedom, 1);
 % test_hand.jointAngles = [0; pi/4; -pi/3];
 % test_hand.jointVelocities = 1.0*randn(test_hand.numberOfJoints, 1);
 % test_hand.jointVelocities = 0.1*ones(test_hand.numberOfJoints, 1);
-test_hand.jointVelocities = ones(test_hand.numberOfJoints, 1);
-% test_hand.jointVelocities(1) = 1;
+% test_hand.jointVelocities = ones(test_hand.numberOfJoints, 1);
+% test_hand.jointVelocities([4 7]) = 1;
+test_hand.jointAngles(2) = -pi/4;
+test_hand.jointAngles(5) = pi/4;
 % test_hand.jointVelocities = randn(test_hand.numberOfJoints, 1);
 test_hand.updateInternals;
 
@@ -141,40 +136,40 @@ diff_hand = GeneralKinematicTree ...
 % return
 
 % numerically calculate the bodyJacobianTemporalDerivatives
-delta_t = 0.0000000001;
-diff_hand.jointAngles = test_hand.jointAngles + delta_t * test_hand.jointVelocities;
-diff_hand.updateInternals();
-delta_body_jacobian_one = diff_hand.bodyJacobians{1} - test_hand.bodyJacobians{1};
-bodyJacobianTemporalDerivative_one_numerical = delta_body_jacobian_one * delta_t^(-1)
-bodyJacobianTemporalDerivative_one_analytical = test_hand.bodyJacobianTemporalDerivatives{1}
-delta_body_jacobian_two = diff_hand.bodyJacobians{2} - test_hand.bodyJacobians{2};
-bodyJacobianTemporalDerivative_two_numerical = delta_body_jacobian_two * delta_t^(-1)
-bodyJacobianTemporalDerivative_two_analytical = test_hand.bodyJacobianTemporalDerivatives{2}
-
-delta_eef_trafo_one = diff_hand.endEffectorTransformations{1} - test_hand.endEffectorTransformations{1};
-delta_eef_trafo_adjoint_one = createAdjointTransformation(diff_hand.endEffectorTransformations{1}) - createAdjointTransformation(test_hand.endEffectorTransformations{1});
-eef_trafo_dot_numerical = delta_eef_trafo_one * delta_t^(-1);
-eef_trafo_adjoint_dot_numerical = delta_eef_trafo_adjoint_one * delta_t^(-1);
-
-% test the equations step by step
-J_s = test_hand.spatialJacobian;
-J_s_dot = test_hand.spatialJacobianTemporalDerivative;
-for i_joint = 1 : test_hand.numberOfJoints
-    J_s(:, i_joint) = J_s(:, i_joint) * test_hand.branchMatrix(1, i_joint);
-    J_s_dot(:, i_joint) = J_s_dot(:, i_joint) * test_hand.branchMatrix(1, i_joint);
-end
-J_b = test_hand.bodyJacobians{1};
-eef_trafo = test_hand.endEffectorTransformations{1};
-A_eef_trafo = createAdjointTransformation(eef_trafo);
-body_velocity = test_hand.bodyJacobians{1} * test_hand.jointVelocities;
-eef_trafo_dot_analytical = eef_trafo * twistCoordinatesToMatrix(body_velocity);
-R_eef = eef_trafo(1:3, 1:3);
-p_eef = eef_trafo(1:3, 4);
-R_eef_dot = eef_trafo_dot_analytical(1:3, 1:3);
-p_eef_dot = eef_trafo_dot_analytical(1:3, 4);
-p_eef_skew = skewVectorToMatrix(p_eef);
-p_eef_dot_skew = skewVectorToMatrix(p_eef_dot);
-eef_trafo_adjoint_dot_analytical = [R_eef_dot p_eef_dot_skew*R_eef+p_eef_skew*R_eef_dot; zeros(3) R_eef_dot];
+% delta_t = 0.0000000001;
+% diff_hand.jointAngles = test_hand.jointAngles + delta_t * test_hand.jointVelocities;
+% diff_hand.updateInternals();
+% delta_body_jacobian_one = diff_hand.bodyJacobians{1} - test_hand.bodyJacobians{1};
+% bodyJacobianTemporalDerivative_one_numerical = delta_body_jacobian_one * delta_t^(-1)
+% bodyJacobianTemporalDerivative_one_analytical = test_hand.bodyJacobianTemporalDerivatives{1}
+% delta_body_jacobian_two = diff_hand.bodyJacobians{2} - test_hand.bodyJacobians{2};
+% bodyJacobianTemporalDerivative_two_numerical = delta_body_jacobian_two * delta_t^(-1)
+% bodyJacobianTemporalDerivative_two_analytical = test_hand.bodyJacobianTemporalDerivatives{2}
+% 
+% delta_eef_trafo_one = diff_hand.endEffectorTransformations{1} - test_hand.endEffectorTransformations{1};
+% delta_eef_trafo_adjoint_one = createAdjointTransformation(diff_hand.endEffectorTransformations{1}) - createAdjointTransformation(test_hand.endEffectorTransformations{1});
+% eef_trafo_dot_numerical = delta_eef_trafo_one * delta_t^(-1);
+% eef_trafo_adjoint_dot_numerical = delta_eef_trafo_adjoint_one * delta_t^(-1);
+% 
+% % test the equations step by step
+% J_s = test_hand.spatialJacobian;
+% J_s_dot = test_hand.spatialJacobianTemporalDerivative;
+% for i_joint = 1 : test_hand.numberOfJoints
+%     J_s(:, i_joint) = J_s(:, i_joint) * test_hand.branchMatrix(1, i_joint);
+%     J_s_dot(:, i_joint) = J_s_dot(:, i_joint) * test_hand.branchMatrix(1, i_joint);
+% end
+% J_b = test_hand.bodyJacobians{1};
+% eef_trafo = test_hand.endEffectorTransformations{1};
+% A_eef_trafo = createAdjointTransformation(eef_trafo);
+% body_velocity = test_hand.bodyJacobians{1} * test_hand.jointVelocities;
+% eef_trafo_dot_analytical = eef_trafo * twistCoordinatesToMatrix(body_velocity);
+% R_eef = eef_trafo(1:3, 1:3);
+% p_eef = eef_trafo(1:3, 4);
+% R_eef_dot = eef_trafo_dot_analytical(1:3, 1:3);
+% p_eef_dot = eef_trafo_dot_analytical(1:3, 4);
+% p_eef_skew = skewVectorToMatrix(p_eef);
+% p_eef_dot_skew = skewVectorToMatrix(p_eef_dot);
+% eef_trafo_adjoint_dot_analytical = [R_eef_dot p_eef_dot_skew*R_eef+p_eef_skew*R_eef_dot; zeros(3) R_eef_dot];
 
 % J_s_dot
 % eef_trafo_adjoint_dot_numerical*J_b + createAdjointTransformation(test_hand.endEffectorTransformations{1})*bodyJacobianTemporalDerivative_one_numerical
@@ -196,7 +191,7 @@ eef_trafo_adjoint_dot_analytical = [R_eef_dot p_eef_dot_skew*R_eef+p_eef_skew*R_
 
 % eef_trafo_adjoint_dot_numerical
 % eef_trafo_adjoint_dot_analytical
-return
+% return
 
 % check end-effector Jacobians
 % diff_hand.updateInternals;
@@ -276,11 +271,11 @@ set(gca, 'xlim', [stickFigure.sceneBound(1), stickFigure.sceneBound(2)], ...
          'ylim', [stickFigure.sceneBound(3), stickFigure.sceneBound(4)], ...
          'zlim',[stickFigure.sceneBound(5), stickFigure.sceneBound(6)]);
 view([0, -1, 0]);
-% stickFigure.showLinkMassEllipsoids = true;
+stickFigure.showLinkMassEllipsoids = true;
 % view(-130, 20);
 stickFigure.update();
 
-return
+% return
 
 % numerically calculate the inertia matrix partial derivatives
 % diff_hand = GeneralKinematicTree ...
@@ -318,7 +313,7 @@ return
 
 
 
-timeStep = 0.001;
+timeStep = 0.01;
 counter = 1;
 while true
 %     % apply constraints
@@ -334,7 +329,7 @@ while true
     M = test_hand.inertiaMatrix;
     lambda = (A*M^(-1)*A')^(-1) ...
         * (A*M^(-1)*(test_hand.externalTorques - test_hand.coriolisMatrix*test_hand.jointVelocities - test_hand.gravitationalTorqueMatrix) + ADot*test_hand.jointVelocities);
-    test_hand.constraintTorques = A'*lambda;
+%     test_hand.constraintTorques = A'*lambda;
     constraint_torques = A'*lambda;
     
     
@@ -345,7 +340,7 @@ while true
     test_hand.updateInternals;
     
     counter = counter+1;
-    if counter == 2
+    if counter == 3
         counter = 0;
         stickFigure.update;
         drawnow;
