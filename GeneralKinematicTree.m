@@ -456,20 +456,20 @@ classdef GeneralKinematicTree < KinematicTree
                     % factors before the k-th
                     for i_joint = 1 : k_joint-1
                         % i-th factor stays the same for i < k
-                        if obj.connectivityMatrix(i_joint, j_joint) % changed
+                        if obj.connectivityMatrix(i_joint, j_joint)
                             s_k = s_k * obj.twistExponentials{i_joint};
-                        end % changed
+                        end
                     end
                     % k-th factor is derived by time
-                    if obj.connectivityMatrix(k_joint, j_joint) % changed
+                    if obj.connectivityMatrix(k_joint, j_joint)
                         s_k = s_k * twistCoordinatesToMatrix(obj.referenceJointTwists{k_joint}) * obj.jointVelocities(k_joint) * obj.twistExponentials{k_joint};
-                    end % changed
+                    end
                     % factors after the k-th
                     for i_joint = k_joint+1 : j_joint-1
                         % i-th factor stays the same for i > k
-                        if obj.connectivityMatrix(i_joint, j_joint) % changed
+                        if obj.connectivityMatrix(i_joint, j_joint)
                             s_k = s_k * obj.twistExponentials{i_joint};
-                        end % changed
+                        end
                     end
                     s_k = s_k * twistCoordinatesToMatrix(obj.referenceJointTwists{j_joint}) * obj.productsOfExponentials{obj.jointParents(j_joint)}^(-1);
 
@@ -479,18 +479,18 @@ classdef GeneralKinematicTree < KinematicTree
                     t_k = obj.productsOfExponentials{obj.jointParents(j_joint)} * twistCoordinatesToMatrix(obj.referenceJointTwists{j_joint}); 
                     % the summand where the factor with the negative sign theta_k is derived
                     for i_joint = j_joint-1 : -1 : k_joint+1
-                        if obj.connectivityMatrix(i_joint, j_joint) % changed
+                        if obj.connectivityMatrix(i_joint, j_joint)
                             t_k = t_k * obj.twistExponentials{i_joint}^(-1);
-                        end % changed
+                        end
                     end
-                    if obj.connectivityMatrix(k_joint, j_joint) % changed
+                    if obj.connectivityMatrix(k_joint, j_joint)
                         t_k = t_k * twistCoordinatesToMatrix(obj.referenceJointTwists{k_joint}) * obj.jointVelocities(k_joint) * obj.twistExponentials{k_joint}^(-1);
-                    end % changed
+                    end
                     for i_joint = k_joint-1 : -1 : 1
                         % i-th factor stays the same for i < k
-                        if obj.connectivityMatrix(i_joint, j_joint) % changed
+                        if obj.connectivityMatrix(i_joint, j_joint)
                             t_k = t_k * obj.twistExponentials{i_joint}^(-1);
-                        end % changed
+                        end
                     end
 
                     % add this summand to the sum
@@ -511,14 +511,21 @@ classdef GeneralKinematicTree < KinematicTree
                 for i_joint = 1 : obj.numberOfJoints
                     J_s_dot(:, i_joint) = J_s_dot(:, i_joint) * obj.branchMatrix(i_eef, i_joint);
                 end
+                % todo: check if this can be simplified
                 end_effector_transformation = obj.endEffectorTransformations{i_eef};
-                summand_1 = createAdjointTransformation(end_effector_transformation^(-1)) * J_s_dot;
-                
                 body_velocity = obj.bodyJacobians{i_eef} * obj.jointVelocities;
-                body_velocity_adjoint = createAdjointTransformation(twistCoordinatesToMatrix(body_velocity));
-                summand_2 = body_velocity_adjoint * obj.bodyJacobians{i_eef};
+                eef_trafo_dot_analytical = end_effector_transformation * twistCoordinatesToMatrix(body_velocity);
+                R_eef = end_effector_transformation(1:3, 1:3);
+                p_eef = end_effector_transformation(1:3, 4);
+                R_eef_dot = eef_trafo_dot_analytical(1:3, 1:3);
+                p_eef_dot = eef_trafo_dot_analytical(1:3, 4);
+                p_eef_skew = skewVectorToMatrix(p_eef);
+                p_eef_dot_skew = skewVectorToMatrix(p_eef_dot);
+                eef_trafo_adjoint_dot_analytical = [R_eef_dot p_eef_dot_skew*R_eef+p_eef_skew*R_eef_dot; zeros(3) R_eef_dot];
                 
-                obj.bodyJacobianTemporalDerivatives{i_eef} = summand_1 - summand_2;
+                obj.bodyJacobianTemporalDerivatives{i_eef} = ...
+                    invertAdjoint(createAdjointTransformation(end_effector_transformation)) * ...
+                      (J_s_dot - eef_trafo_adjoint_dot_analytical * obj.bodyJacobians{i_eef});
             end
         end
 %         function calculateEndEffectorAcceleration(obj)
