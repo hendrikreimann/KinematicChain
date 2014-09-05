@@ -1,27 +1,29 @@
 % 3 joints
-% joint_positions = {[0; 0; 0]; [1; 0; 0]; [-1; 0; 0]};
-% joint_axes = {[0; 0; 1], [0; 0; 1], [0; 0; 1]};
-% joint_types = [1 1 1];
-% end_effectors = {[3; 0; 0], [-3; 0; 0]};
-% link_positions = {[0; 0; 0]; [1.5; 0; 0]; [-1.5; 0; 0];};
-% branch_matrix = [1 1 0; 1 0 1]; % each row is a branch, listing the joints that move the end-effector of that branch
+joint_positions = {[0; 0; 0]; [1; 0; 0]; [-1; 0; 0];};
+joint_axes = {[0; 1; 0], [0; 1; 0], [0; 1; 0]};
+joint_types = [1 1 1];
+end_effectors = {[1; 0; -1], [-1; 0; -1]};
+link_positions = {[0; 0; 0]; [1; 0; -0.5]; [-1; 0; -0.5];};
+branch_matrix = [1 1 0; 1 0 1]; % each row is a branch, listing the joints that move the end-effector of that branch
+link_orientations = {eye(3), eye(3), eye(3)};
 
-% 5 joints
-% joint_positions = {[0; 0; 0]; [0.5; 0; 0]; [0.5; -1; 0]; [-0.5; 0; 0]; [-0.5; -1; 0]; };
-% joint_axes = {[0; 0; 1], [0; 0; 1], [0; 0; 1], [0; 0; 1], [0; 0; 1]};
-% joint_types = [1 1 1 1 1];
-% end_effectors = {[0.5; -2; 0], [-0.5; -2; 0]};
-% link_positions = {[0; 0; 0]; [0.5; -0.5; 0]; [0.5; -1.5; 0]; [-0.5; -0.5; 0]; [-0.5; -1.5; 0];};
-% branch_matrix = [1 1 1 0 0; 1 0 0 1 1]; % each row is a branch, listing the joints that move the end-effector of that branch
+% 2 joints out of these 3, to check
+joint_positions_chain = {[0; 0; 0]; [1; 0; 0]};
+joint_axes_chain = {[0; 1; 0], [0; 1; 0]};
+joint_types_chain = [1 1];
+end_effector_chain = [1; 0; -1];
+link_positions_chain = {[0; 0; 0]; [1; 0; -0.5];};
+link_orientations_chain = {eye(3), eye(3)};
+
 
 % 5 joints, vertical
-joint_positions = {[0; 0; 0]; [0.5; 0; 0]; [0.5; 0; -1]; [-0.5; 0; 0]; [-0.5; 0; -1]; };
-joint_axes = {[0; 1; 0], [0; 1; 0], [0; 1; 0], [0; 1; 0], [0; 1; 0]};
-joint_types = [1 1 1 1 1];
-end_effectors = {[0.5; 0; -2], [-0.5; 0; -2]};
-link_positions = {[0; 0; 0]; [0.5; 0; -0.5]; [0.5; 0; -1.5]; [-0.5; 0; -0.5]; [-0.5; 0; -1.5];};
-branch_matrix = [1 1 1 0 0; 1 0 0 1 1]; % each row is a branch, listing the joints that move the end-effector of that branch
-link_orientations = {eye(3), eye(3), eye(3), eye(3), eye(3)};
+% joint_positions = {[0; 0; 0]; [0.5; 0; 0]; [0.5; 0; -1]; [-0.5; 0; 0]; [-0.5; 0; -1]; };
+% joint_axes = {[0; 1; 0], [0; 1; 0], [0; 1; 0], [0; 1; 0], [0; 1; 0]};
+% joint_types = [1 1 1 1 1];
+% end_effectors = {[0.5; 0; -2], [-0.5; 0; -2]};
+% link_positions = {[0; 0; 0]; [0.5; 0; -0.5]; [0.5; 0; -1.5]; [-0.5; 0; -0.5]; [-0.5; 0; -1.5];};
+% branch_matrix = [1 1 1 0 0; 1 0 0 1 1]; % each row is a branch, listing the joints that move the end-effector of that branch
+% link_orientations = {eye(3), eye(3), eye(3), eye(3), eye(3)};
 
 % % 5 joints, human-like
 % joint_positions = {[0; 0; 0]; [0.5; 0; 0]; [0.5; 0; -1]; [-0.5; 0; 0]; [-0.5; 0; -1]; };
@@ -41,17 +43,17 @@ link_orientations = {eye(3), eye(3), eye(3), eye(3), eye(3)};
 % link_orientations = {eye(3), eye(3), eye(3), eye(3), eye(3)};
 
 % 7 joints
-joint_positions = {[0; 0; 0]; [0.5; 0; 0]; [0.5; 0; -1]; [0.5; 0; -1.5]; [-0.5; 0; 0]; [-0.5; 0; -1]; [-0.5; 0; -1.5]; };
-joint_axes = {[0; 1; 0], [0; 1; 0], [0; 1; 0], [0; 1; 0], [0; 1; 0], [0; 1; 0], [0; 1; 0]};
-joint_types = [1 1 1 1 1 1 1];
-end_effectors = {[0.5; 0; -2], [-0.5; 0; -2]};
-link_positions = {[0; 0; 0]; [0.5; 0; -0.5]; [0.5; 0; -1.25]; [0.5; 0; -1.75]; [-0.5; 0; -0.5]; [-0.5; 0; -1.25]; [-0.5; 0; -1.75];};
-link_orientations = {eye(3), eye(3), eye(3), eye(3), eye(3), eye(3), eye(3)};
-branch_matrix = ...
-  [ ...
-    1 1 1 1 0 0 0; ...
-    1 0 0 0 1 1 1; ...
-  ];
+% joint_positions = {[0; 0; 0]; [0.5; 0; 0]; [0.5; 0; -1]; [0.5; 0; -1.5]; [-0.5; 0; 0]; [-0.5; 0; -1]; [-0.5; 0; -1.5]; };
+% joint_axes = {[0; 1; 0], [0; 1; 0], [0; 1; 0], [0; 1; 0], [0; 1; 0], [0; 1; 0], [0; 1; 0]};
+% joint_types = [1 1 1 1 1 1 1];
+% end_effectors = {[0.5; 0; -2], [-0.5; 0; -2]};
+% link_positions = {[0; 0; 0]; [0.5; 0; -0.5]; [0.5; 0; -1.25]; [0.5; 0; -1.75]; [-0.5; 0; -0.5]; [-0.5; 0; -1.25]; [-0.5; 0; -1.75];};
+% link_orientations = {eye(3), eye(3), eye(3), eye(3), eye(3), eye(3), eye(3)};
+% branch_matrix = ...
+%   [ ...
+%     1 1 1 1 0 0 0; ...
+%     1 0 0 0 1 1 1; ...
+%   ];
 
 reset(RandStream.getGlobalStream);
 
@@ -66,6 +68,8 @@ degrees_of_freedom = length(joint_axes);
 link_masses = ones(degrees_of_freedom, 1);
 % link_moments_of_inertia = ones(degrees_of_freedom, 3) * 0.05;
 link_moments_of_inertia = [[1 5 5] ; repmat([1 1 .5], degrees_of_freedom-1, 1)] * 0.01;
+link_masses_chain = ones(2, 1);
+link_moments_of_inertia_chain = [[1 5 5] ; repmat([1 1 .5], 2-1, 1)] * 0.01;
 
 test_hand = GeneralKinematicTree ...
 ( ...
@@ -79,7 +83,16 @@ test_hand = GeneralKinematicTree ...
   link_moments_of_inertia, ...
   link_orientations ...
 );
-
+test_hand_chain = GeneralKinematicChain ...
+( ...
+  joint_positions_chain, ...
+  joint_axes_chain, ...
+  joint_types_chain, ...
+  end_effector_chain, ...
+  link_positions_chain, ...
+  link_masses_chain, ...
+  link_moments_of_inertia_chain ...
+);
 
 
 % test_hand.jointAngles = -.3*randn(degrees_of_freedom, 1);
@@ -98,12 +111,13 @@ test_hand = GeneralKinematicTree ...
 % test_hand.jointVelocities = ones(test_hand.numberOfJoints, 1);
 % test_hand.jointVelocities([4 7]) = 1;
 test_hand.jointAngles(2) = -pi/4;
-test_hand.jointAngles(5) = pi/4;
+test_hand_chain.jointAngles(2) = -pi/4;
+test_hand.jointAngles(3) = pi/4;
 % test_hand.jointVelocities = randn(test_hand.numberOfJoints, 1);
-test_hand.updateInternals;
+test_hand.updateInternals();
+test_hand_chain.updateInternals();
 
-
-
+return
 diff_hand = GeneralKinematicTree ...
 ( ...
   joint_positions, ...
@@ -310,15 +324,15 @@ stickFigure.update();
 % end
 
 
-
+% return
 
 
 timeStep = 0.01;
-counter = 1;
+counter = 0;
 while true
 %     % apply constraints
-    A = test_hand.endEffectorJacobians{1}([1 3], :);
-    ADot = test_hand.endEffectorJacobianTemporalDerivatives{1}([1 3], :);
+%     A = test_hand.endEffectorJacobians{1}([1 3], :);
+%     ADot = test_hand.endEffectorJacobianTemporalDerivatives{1}([1 3], :);
 %     A = test_hand.endEffectorJacobians{1}(1, :);
 %     ADot = test_hand.endEffectorJacobianTemporalDerivatives{1}(1, :);
 
@@ -326,11 +340,11 @@ while true
 % J_b = test_hand.bodyJacobians{1};
 % J_b_orientation_part = J_b(4:6, :)
     
-    M = test_hand.inertiaMatrix;
-    lambda = (A*M^(-1)*A')^(-1) ...
-        * (A*M^(-1)*(test_hand.externalTorques - test_hand.coriolisMatrix*test_hand.jointVelocities - test_hand.gravitationalTorqueMatrix) + ADot*test_hand.jointVelocities);
-%     test_hand.constraintTorques = A'*lambda;
-    constraint_torques = A'*lambda;
+%     M = test_hand.inertiaMatrix;
+%     lambda = (A*M^(-1)*A')^(-1) ...
+%         * (A*M^(-1)*(test_hand.externalTorques - test_hand.coriolisMatrix*test_hand.jointVelocities - test_hand.gravitationalTorqueMatrix) + ADot*test_hand.jointVelocities);
+% %     test_hand.constraintTorques = A'*lambda;
+%     constraint_torques = A'*lambda;
     
     
     
