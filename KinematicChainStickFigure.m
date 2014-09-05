@@ -22,7 +22,7 @@ classdef KinematicChainStickFigure < handle
             else
                 obj.sceneBound = sceneBound;
             end
-            obj.sceneFigure = figure( 'Position', [ 1250, 1100, 400, 400 ], 'Name', 'scene' );
+            obj.sceneFigure = figure( 'Position', [500, 500, 600, 600], 'Name', 'scene' );
             obj.sceneAxes = axes( 'Position', [ 0.1 0.1 0.8 0.8 ]);
             axis equal; hold on;
             plot3([obj.sceneBound(1), obj.sceneBound(2)], [0, 0], [0, 0], 'color','k','Linewidth', 1, 'Linestyle',':');
