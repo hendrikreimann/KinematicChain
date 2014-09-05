@@ -300,11 +300,15 @@ classdef GeneralKinematicTree < KinematicTree
         
             % calculate transformations that are non-zero and non-identity
             for j_joint = 1 : obj.numberOfJoints-1
-                % first element of this column, i=j+1
-                obj.interTransformations{j_joint+1, j_joint} = obj.twistExponentials{j_joint+1};
+                if obj.connectivityMatrix(j_joint, j_joint+1)
+                    % first element of this column, i=j+1
+                    obj.interTransformations{j_joint+1, j_joint} = obj.twistExponentials{j_joint+1};
+                end
                 % rest of the column
                 for i_joint = j_joint+2 : obj.numberOfJoints
-                    obj.interTransformations{i_joint, j_joint} = obj.interTransformations{i_joint-1, j_joint} * obj.twistExponentials{i_joint};
+                    if obj.connectivityMatrix(j_joint, i_joint)
+                        obj.interTransformations{i_joint, j_joint} = obj.interTransformations{obj.jointParents(i_joint), j_joint} * obj.twistExponentials{i_joint};
+                    end
                 end
             end
         end
