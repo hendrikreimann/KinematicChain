@@ -55,7 +55,7 @@ branch_matrix = ...
     1 0 0 0 1 1 1; ...
   ];
 
-reset(RandStream.getGlobalStream);
+% reset(RandStream.getGlobalStream);
 
 % randomize joint axes
 % for i_joint = 1 : length(joint_axes)
@@ -113,7 +113,7 @@ test_hand.jointAngles = 1.0*randn(test_hand.numberOfJoints, 1);
 % test_hand.jointAngles(2) = -pi/4;
 % test_hand_chain.jointAngles(2) = -pi/4;
 % test_hand.jointAngles(5) = pi/4;
-% test_hand.jointVelocities = randn(test_hand.numberOfJoints, 1);
+test_hand.jointVelocities = randn(test_hand.numberOfJoints, 1);
 test_hand.updateInternals();
 % test_hand_chain.updateInternals();
 
@@ -156,63 +156,29 @@ diff_hand = GeneralKinematicTree ...
 % return
 
 % numerically calculate the bodyJacobianTemporalDerivatives
-% delta_t = 0.0000000001;
-% diff_hand.jointAngles = test_hand.jointAngles + delta_t * test_hand.jointVelocities;
-% diff_hand.updateInternals();
+delta_t = 0.0000000001;
+diff_hand.jointAngles = test_hand.jointAngles + delta_t * test_hand.jointVelocities;
+diff_hand.updateInternals();
 % delta_body_jacobian_one = diff_hand.bodyJacobians{1} - test_hand.bodyJacobians{1};
 % bodyJacobianTemporalDerivative_one_numerical = delta_body_jacobian_one * delta_t^(-1)
 % bodyJacobianTemporalDerivative_one_analytical = test_hand.bodyJacobianTemporalDerivatives{1}
 % delta_body_jacobian_two = diff_hand.bodyJacobians{2} - test_hand.bodyJacobians{2};
 % bodyJacobianTemporalDerivative_two_numerical = delta_body_jacobian_two * delta_t^(-1)
 % bodyJacobianTemporalDerivative_two_analytical = test_hand.bodyJacobianTemporalDerivatives{2}
-% 
-% delta_eef_trafo_one = diff_hand.endEffectorTransformations{1} - test_hand.endEffectorTransformations{1};
-% delta_eef_trafo_adjoint_one = createAdjointTransformation(diff_hand.endEffectorTransformations{1}) - createAdjointTransformation(test_hand.endEffectorTransformations{1});
-% eef_trafo_dot_numerical = delta_eef_trafo_one * delta_t^(-1);
-% eef_trafo_adjoint_dot_numerical = delta_eef_trafo_adjoint_one * delta_t^(-1);
-% 
-% % test the equations step by step
-% J_s = test_hand.spatialJacobian;
-% J_s_dot = test_hand.spatialJacobianTemporalDerivative;
-% for i_joint = 1 : test_hand.numberOfJoints
-%     J_s(:, i_joint) = J_s(:, i_joint) * test_hand.branchMatrix(1, i_joint);
-%     J_s_dot(:, i_joint) = J_s_dot(:, i_joint) * test_hand.branchMatrix(1, i_joint);
-% end
-% J_b = test_hand.bodyJacobians{1};
-% eef_trafo = test_hand.endEffectorTransformations{1};
-% A_eef_trafo = createAdjointTransformation(eef_trafo);
-% body_velocity = test_hand.bodyJacobians{1} * test_hand.jointVelocities;
-% eef_trafo_dot_analytical = eef_trafo * twistCoordinatesToMatrix(body_velocity);
-% R_eef = eef_trafo(1:3, 1:3);
-% p_eef = eef_trafo(1:3, 4);
-% R_eef_dot = eef_trafo_dot_analytical(1:3, 1:3);
-% p_eef_dot = eef_trafo_dot_analytical(1:3, 4);
-% p_eef_skew = skewVectorToMatrix(p_eef);
-% p_eef_dot_skew = skewVectorToMatrix(p_eef_dot);
-% eef_trafo_adjoint_dot_analytical = [R_eef_dot p_eef_dot_skew*R_eef+p_eef_skew*R_eef_dot; zeros(3) R_eef_dot];
 
-% J_s_dot
-% eef_trafo_adjoint_dot_numerical*J_b + createAdjointTransformation(test_hand.endEffectorTransformations{1})*bodyJacobianTemporalDerivative_one_numerical
+delta_eef_trafo_one = diff_hand.endEffectorTransformations{1} - test_hand.endEffectorTransformations{1};
+delta_eef_trafo_adjoint_one = createAdjointTransformation(diff_hand.endEffectorTransformations{1}) - createAdjointTransformation(test_hand.endEffectorTransformations{1});
+eef_trafo_dot_numerical = delta_eef_trafo_one * delta_t^(-1);
+eef_trafo_adjoint_dot_numerical = delta_eef_trafo_adjoint_one * delta_t^(-1);
 
-% bodyJacobianTemporalDerivative_one_numerical
-% createAdjointTransformation(test_hand.endEffectorTransformations{1})^(-1)*(J_s_dot - eef_trafo_adjoint_dot_numerical*J_b)
+[bodyJacobian, bodyJacobianTemporalDerivative] = test_hand.calculateArbitraryFrameBodyJacobian(test_hand.endEffectorTransformations{1}, 3);
 
-% bodyJacobianTemporalDerivative_one_numerical
-% createAdjointTransformation(test_hand.endEffectorTransformations{1})^(-1)*J_s_dot - createAdjointTransformation(test_hand.endEffectorTransformations{1})^(-1)*eef_trafo_adjoint_dot_numerical*J_b
+bodyJacobian
+test_hand.bodyJacobians{1}
+bodyJacobianTemporalDerivative
+test_hand.bodyJacobianTemporalDerivatives{1}
 
-% bodyJacobianTemporalDerivative_one_numerical
-% createAdjointTransformation(test_hand.endEffectorTransformations{1}^(-1))*J_s_dot - createAdjointTransformation(test_hand.endEffectorTransformations{1}^(-1))*eef_trafo_adjoint_dot_numerical*J_b
-
-% eef_trafo_adjoint_dot_numerical
-% createAdjointTransformation(eef_trafo_dot_numerical)
-
-% eef_trafo_dot_numerical
-% eef_trafo_dot_analytical
-
-% eef_trafo_adjoint_dot_numerical
-% eef_trafo_adjoint_dot_analytical
-% return
-
+return
 % check end-effector Jacobians
 % diff_hand.updateInternals;
 % delta_theta = 0.00000001;

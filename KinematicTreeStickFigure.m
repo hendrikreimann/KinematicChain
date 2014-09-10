@@ -21,10 +21,10 @@ classdef KinematicTreeStickFigure < handle
         linkMassEllipsoidResolution = 15;
         
         % graphics
-        jointPlotsColor = [1 0 0];
-        linkPlotsColor = [1 0 0];
+        jointPlotsColor = [0 0 1];
+        linkPlotsColor = [0 0 0];
         jointPlotsLinewidth = 3;
-        linkPlotsLinewidth = 1;
+        linkPlotsLinewidth = 2;
         
         % flags
         showLinkCentersOfMass = false;

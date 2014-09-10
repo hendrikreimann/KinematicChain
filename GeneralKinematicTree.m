@@ -30,7 +30,7 @@ classdef GeneralKinematicTree < KinematicTree
         markerConnectionLineIndices
     end
     methods
-        function obj = GeneralKinematicTree(jointPositions, jointAxes, jointTypes, branchMatrix, endEffectorPositions, linkCenters, linkMasses, linkMomentsOfInertia, linkOrientations)
+        function obj = GeneralKinematicTree(jointPositions, jointAxes, jointTypes, branchMatrix, endEffectorPositions, linkCenters, linkMasses, linkMomentsOfInertia, linkOrientations, gravitationalConstant)
             if nargin == 0
                 jointPositions = {[0; 0; 0]};
                 jointAxes = {[0; 0; 1]};
@@ -41,10 +41,12 @@ classdef GeneralKinematicTree < KinematicTree
                 linkMasses = 1;
                 linkMomentsOfInertia = [1 1 1];
                 linkOrientations = {eye(3)};
+                gravitationalConstant = 9.81;
             end
             degrees_of_freedom = length(jointPositions);
             obj = obj@KinematicTree(degrees_of_freedom, branchMatrix);
             obj.linkMasses = linkMasses;
+            obj.gravitationalConstant = gravitationalConstant;
             
             % generate references
             for i_joint = 1 : degrees_of_freedom
@@ -78,8 +80,6 @@ classdef GeneralKinematicTree < KinematicTree
                 obj.linkVisualizationReferenceData(i_joint).startPoints(:, 1) = start_point;
                 obj.linkVisualizationReferenceData(i_joint).endPoints(:, 1) = end_point;
             end
-            
-            
         end
         function updateConfiguration(obj)
             % update geometric transformations
@@ -271,8 +271,6 @@ classdef GeneralKinematicTree < KinematicTree
                 for i_joint = 1 : obj.numberOfJoints
                     bodyJacobian(:, i_joint) = bodyJacobian(:, i_joint) * obj.branchMatrix(i_eef, i_joint);
                 end
-                
-                
                 obj.bodyJacobians{i_eef} = bodyJacobian;
             end
         end
@@ -532,6 +530,45 @@ classdef GeneralKinematicTree < KinematicTree
                       (J_s_dot - eef_trafo_adjoint_dot_analytical * obj.bodyJacobians{i_eef});
             end
         end
+        function [bodyJacobian, bodyJacobianTemporalDerivative] = calculateArbitraryFrameBodyJacobian(obj, coordinateFrame, attachmentJoint)
+            % calculate body Jacobian
+            coordinate_frame_adjoint = createAdjointTransformation(coordinateFrame);
+            inverse_coordinate_frame_adjoint = coordinate_frame_adjoint^(-1);
+            body_jacobian_full = inverse_coordinate_frame_adjoint * obj.spatialJacobian;
+            bodyJacobian = zeros(size(body_jacobian_full));
+            % remove columns that do not move this end-effector
+            for i_joint = 1 : obj.numberOfJoints
+                if obj.connectivityMatrix(i_joint, attachmentJoint) || (i_joint == attachmentJoint)
+                    bodyJacobian(:, i_joint) = body_jacobian_full(:, i_joint);
+                end
+            end
+            
+            % calculate temporal derivative
+            if nargout == 2
+                % get and adjust spatial Jacobian temporal derivative
+                J_s_dot_full = obj.spatialJacobianTemporalDerivative;
+                J_s_dot = zeros(size(obj.spatialJacobianTemporalDerivative));
+                for i_joint = 1 : obj.numberOfJoints
+                    if obj.connectivityMatrix(i_joint, attachmentJoint) || (i_joint == attachmentJoint)
+                        J_s_dot(:, i_joint) = J_s_dot_full(:, i_joint);
+                    end
+                end
+            end            
+            body_velocity = bodyJacobian * obj.jointVelocities;
+            coordinate_frame_dot = coordinateFrame * twistCoordinatesToMatrix(body_velocity);
+            R = coordinateFrame(1:3, 1:3);
+            p = coordinateFrame(1:3, 4);
+            R_dot = coordinate_frame_dot(1:3, 1:3);
+            p_dot = coordinate_frame_dot(1:3, 4);
+            p_skew = skewVectorToMatrix(p);
+            p_dot_skew = skewVectorToMatrix(p_dot);
+            coordinate_frame_adjoint_dot = [R_dot p_dot_skew*R+p_skew*R_dot; zeros(3) R_dot];
+            bodyJacobianTemporalDerivative = ...
+              invertAdjoint(createAdjointTransformation(coordinateFrame)) * ...
+              (J_s_dot - coordinate_frame_adjoint_dot * bodyJacobian);
+        end
+        
+        
 %         function calculateEndEffectorAcceleration(obj)
 %             T1 = obj.spatialJacobianTemporalDerivative * obj.jointVelocities;
 %             T2 = obj.spatialJacobian * obj.jointAccelerations;
