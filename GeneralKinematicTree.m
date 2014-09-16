@@ -43,6 +43,9 @@ classdef GeneralKinematicTree < KinematicTree
                 linkOrientations = {eye(3)};
                 gravitationalConstant = 9.81;
             end
+            if nargin < 10
+                gravitationalConstant = 9.81;
+            end
             degrees_of_freedom = length(jointPositions);
             obj = obj@KinematicTree(degrees_of_freedom, branchMatrix);
             obj.linkMasses = linkMasses;
