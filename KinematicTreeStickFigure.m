@@ -19,6 +19,7 @@ classdef KinematicTreeStickFigure < handle
         linkMassEllipsoids;
         linkMassEllipsoidSurfs;
         linkMassEllipsoidResolution = 15;
+        linkFrameToLinkInertiaRotations;
         
         % graphics
         jointPlotsColor = [0 0 1];
@@ -97,11 +98,21 @@ classdef KinematicTreeStickFigure < handle
             end
             
             % set up link mass ellipsoids
+            this.linkFrameToLinkInertiaRotations = cell(kinematicTree.numberOfJoints, 1);
             for i_joint = 1 : kinematicTree.numberOfJoints
                 m = kinematicTree.linkMasses(i_joint);
-                I_a = kinematicTree.generalizedInertiaMatrices{i_joint}(4, 4);
-                I_b = kinematicTree.generalizedInertiaMatrices{i_joint}(5, 5);
-                I_c = kinematicTree.generalizedInertiaMatrices{i_joint}(6, 6);
+                
+                % diagonalize
+                inertia_tensor_link_frame = kinematicTree.generalizedInertiaMatrices{i_joint}(4:6, 4:6);
+                [U,S,V] = svd(inertia_tensor_link_frame);
+                this.linkFrameToLinkInertiaRotations{i_joint} = U;
+                I_a = S(1, 1);
+                I_b = S(2, 2);
+                I_c = S(3, 3);
+                
+%                 I_a = kinematicTree.generalizedInertiaMatrices{i_joint}(4, 4);
+%                 I_b = kinematicTree.generalizedInertiaMatrices{i_joint}(5, 5);
+%                 I_c = kinematicTree.generalizedInertiaMatrices{i_joint}(6, 6);
                 a = sqrt((5/(2*m)*(- I_a + I_b + I_c)));
                 b = sqrt((5/(2*m)*(+ I_a - I_b + I_c)));
                 c = sqrt((5/(2*m)*(+ I_a + I_b - I_c)));
@@ -202,11 +213,12 @@ classdef KinematicTreeStickFigure < handle
                 if this.showLinkMassEllipsoids && (this.kinematicTree.linkMasses(i_joint) > 0)
                     % transform ellipsoid
                     link_transformation = this.kinematicTree.linkTransformations{i_joint};
+                    inertia_transformation = [this.linkFrameToLinkInertiaRotations{i_joint} zeros(3, 1); 0 0 0 1];
                     ellipsoid_transformed = zeros(size(this.linkMassEllipsoids{i_joint}));
                     for i_point = 1 : this.linkMassEllipsoidResolution + 1
                         for j_point = 1 : this.linkMassEllipsoidResolution + 1
                             point = squeeze(this.linkMassEllipsoids{i_joint}(:, i_point, j_point));
-                            ellipsoid_transformed(:, i_point, j_point) = link_transformation * point;
+                            ellipsoid_transformed(:, i_point, j_point) = link_transformation * inertia_transformation * point;
                         end
                     end
                     

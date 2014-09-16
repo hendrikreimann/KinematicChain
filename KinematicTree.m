@@ -45,7 +45,7 @@ classdef KinematicTree < handle
         miscellaneousLinesEndPoints
         
         % adjustable gravitational constant
-        gravitationalConstant;
+        standardGravity = 9.80665;
         
     end
     methods (Abstract)

@@ -30,7 +30,8 @@ classdef GeneralKinematicTree < KinematicTree
         markerConnectionLineIndices
     end
     methods
-        function obj = GeneralKinematicTree(jointPositions, jointAxes, jointTypes, branchMatrix, endEffectorPositions, linkCenters, linkMasses, linkMomentsOfInertia, linkOrientations, gravitationalConstant)
+%         function obj = GeneralKinematicTree(jointPositions, jointAxes, jointTypes, branchMatrix, endEffectorPositions, linkCenters, linkMasses, linkMomentsOfInertia, linkOrientations)
+        function obj = GeneralKinematicTree(jointPositions, jointAxes, jointTypes, branchMatrix, endEffectorPositions, linkCenters, linkOrientations, varargin)
             if nargin == 0
                 jointPositions = {[0; 0; 0]};
                 jointAxes = {[0; 0; 1]};
@@ -38,18 +39,14 @@ classdef GeneralKinematicTree < KinematicTree
                 branchMatrix = 1;
                 endEffectorPositions = {[2; 0; 0]};
                 linkCenters = {[1; 0; 0]};
-                linkMasses = 1;
-                linkMomentsOfInertia = [1 1 1];
+%                 linkMasses = 1;
+%                 linkMomentsOfInertia = [1 1 1];
                 linkOrientations = {eye(3)};
-                gravitationalConstant = 9.81;
-            end
-            if nargin < 10
-                gravitationalConstant = 9.81;
+                varargin = {1; [1 1 1]};
+                
             end
             degrees_of_freedom = length(jointPositions);
             obj = obj@KinematicTree(degrees_of_freedom, branchMatrix);
-            obj.linkMasses = linkMasses;
-            obj.gravitationalConstant = gravitationalConstant;
             
             % generate references
             for i_joint = 1 : degrees_of_freedom
@@ -61,12 +58,30 @@ classdef GeneralKinematicTree < KinematicTree
                 obj.bodyJacobians{i_eef} = zeros(6, obj.numberOfJoints);
                 obj.bodyJacobianTemporalDerivatives{i_eef} = zeros(6, obj.numberOfJoints);
             end
-            for i_joint = 1 : degrees_of_freedom
-                obj.referenceLinkTransformations{i_joint} = createReferenceTransformation(linkCenters{i_joint}, linkOrientations{i_joint});
-                obj.generalizedInertiaMatrices{i_joint} = generalizedInertiaMatrix(linkMasses(i_joint), linkMomentsOfInertia(i_joint, :));
+            
+            % links
+            if size(varargin, 2) == 2
+                obj.linkMasses = varargin{1};
+                linkMomentsOfInertia = varargin{2};
+                
+                for i_joint = 1 : degrees_of_freedom
+                    obj.referenceLinkTransformations{i_joint} = createReferenceTransformation(linkCenters{i_joint}, linkOrientations{i_joint});
+                    obj.generalizedInertiaMatrices{i_joint} = generalizedInertiaMatrix(obj.linkMasses(i_joint), linkMomentsOfInertia(i_joint, :));
+                end
+                
+            elseif size(varargin, 2) == 1
+                obj.linkMasses = zeros(1, degrees_of_freedom);
+                obj.generalizedInertiaMatrices = varargin{1};
+                for i_joint = 1 : degrees_of_freedom
+                    obj.referenceLinkTransformations{i_joint} = createReferenceTransformation(linkCenters{i_joint}, linkOrientations{i_joint});
+                    obj.linkMasses(i_joint) = obj.generalizedInertiaMatrices{i_joint}(1, 1);
+                end
+            else
+                error('inertial properties not specified');
             end
             obj.transformedLinkInertiaMatrices = ...                    % calculate transformed inertia matrices
                 calculateTransformedLinkInertiaMatrices(obj.generalizedInertiaMatrices, obj.referenceLinkTransformations);
+            
             
             % generate marker data container
             obj.markerReferencePositions = cell(obj.numberOfJoints, 1);
@@ -440,7 +455,7 @@ classdef GeneralKinematicTree < KinematicTree
                 for j_joint = 1 : obj.numberOfJoints
                     N_k = N_k + obj.linkMasses(j_joint) * obj.linkJacobians{j_joint}(3, k_joint);
                 end
-                obj.gravitationalTorqueMatrix(k_joint) = obj.gravitationalConstant * N_k;
+                obj.gravitationalTorqueMatrix(k_joint) = obj.standardGravity * N_k;
             end
         end
         function calculateSpatialJacobianTemporalDerivative(obj)

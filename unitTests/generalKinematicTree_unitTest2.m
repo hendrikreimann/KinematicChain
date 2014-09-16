@@ -1,11 +1,11 @@
 % 3 joints
-% joint_positions = {[0; 0; 0]; [1; 0; 0]; [-1; 0; 0];};
-% joint_axes = {[0; 1; 0], [0; 1; 0], [0; 1; 0]};
-% joint_types = [1 1 1];
-% end_effectors = {[1; 0; -1], [-1; 0; -1]};
-% link_positions = {[0; 0; 0]; [1; 0; -0.5]; [-1; 0; -0.5];};
-% branch_matrix = [1 1 0; 1 0 1]; % each row is a branch, listing the joints that move the end-effector of that branch
-% link_orientations = {eye(3), eye(3), eye(3)};
+joint_positions = {[0; 0; 0]; [1; 0; 0]; [-1; 0; 0];};
+joint_axes = {[0; 1; 0], [0; 1; 0], [0; 1; 0]};
+joint_types = [1 1 1];
+end_effectors = {[1; 0; -1], [-1; 0; -1]};
+link_positions = {[0; 0; 0]; [1; 0; -0.5]; [-1; 0; -0.5];};
+branch_matrix = [1 1 0; 1 0 1]; % each row is a branch, listing the joints that move the end-effector of that branch
+link_orientations = {eye(3), eye(3), eye(3)};
 
 % 2 joints out of these 3, to check
 % joint_positions_chain = {[0; 0; 0]; [1; 0; 0]};
@@ -43,17 +43,17 @@
 % link_orientations = {eye(3), eye(3), eye(3), eye(3), eye(3)};
 
 % 7 joints
-joint_positions = {[0; 0; 0]; [0.5; 0; 0]; [0.5; 0; -1]; [0.5; 0; -1.5]; [-0.5; 0; 0]; [-0.5; 0; -1]; [-0.5; 0; -1.5]; };
-joint_axes = {[0; 1; 0], [0; 1; 0], [0; 1; 0], [0; 1; 0], [0; 1; 0], [0; 1; 0], [0; 1; 0]};
-joint_types = [1 1 1 1 1 1 1];
-end_effectors = {[0.5; 0; -2], [-0.5; 0; -2]};
-link_positions = {[0; 0; 0]; [0.5; 0; -0.5]; [0.5; 0; -1.25]; [0.5; 0; -1.75]; [-0.5; 0; -0.5]; [-0.5; 0; -1.25]; [-0.5; 0; -1.75];};
-link_orientations = {eye(3), eye(3), eye(3), eye(3), eye(3), eye(3), eye(3)};
-branch_matrix = ...
-  [ ...
-    1 1 1 1 0 0 0; ...
-    1 0 0 0 1 1 1; ...
-  ];
+% joint_positions = {[0; 0; 0]; [0.5; 0; 0]; [0.5; 0; -1]; [0.5; 0; -1.5]; [-0.5; 0; 0]; [-0.5; 0; -1]; [-0.5; 0; -1.5]; };
+% joint_axes = {[0; 1; 0], [0; 1; 0], [0; 1; 0], [0; 1; 0], [0; 1; 0], [0; 1; 0], [0; 1; 0]};
+% joint_types = [1 1 1 1 1 1 1];
+% end_effectors = {[0.5; 0; -2], [-0.5; 0; -2]};
+% link_positions = {[0; 0; 0]; [0.5; 0; -0.5]; [0.5; 0; -1.25]; [0.5; 0; -1.75]; [-0.5; 0; -0.5]; [-0.5; 0; -1.25]; [-0.5; 0; -1.75];};
+% link_orientations = {eye(3), eye(3), eye(3), eye(3), eye(3), eye(3), eye(3)};
+% branch_matrix = ...
+%   [ ...
+%     1 1 1 1 0 0 0; ...
+%     1 0 0 0 1 1 1; ...
+%   ];
 
 % reset(RandStream.getGlobalStream);
 
@@ -79,9 +79,9 @@ test_hand = GeneralKinematicTree ...
   branch_matrix, ...
   end_effectors, ...
   link_positions, ...
+  link_orientations, ...
   link_masses, ...
-  link_moments_of_inertia, ...
-  link_orientations ...
+  link_moments_of_inertia ...
 );
 % test_hand_chain = GeneralKinematicChain ...
 % ( ...
@@ -102,18 +102,18 @@ test_hand = GeneralKinematicTree ...
 % test_hand.jointVelocities = [0.2; 0.1; -0.3; -0.6; -0.5; 1.0; -1.0];
 % test_hand.jointVelocities = ones(test_hand.numberOfJoints, 1);
 
-test_hand.jointAngles = 1.0*randn(test_hand.numberOfJoints, 1);
+% test_hand.jointAngles = 1.0*randn(test_hand.numberOfJoints, 1);
 % test_hand.jointAngles = [0; -3*pi/4; pi/4; pi/4; -pi/4];
 % test_hand.jointAngles = [0; -pi/4; pi/4; pi/4; -pi/4];
 % test_hand.jointAngles = [0; pi/4; -pi/3];
 % test_hand.jointVelocities = 1.0*randn(test_hand.numberOfJoints, 1);
-% test_hand.jointVelocities = 0.1*ones(test_hand.numberOfJoints, 1);
+test_hand.jointVelocities = 0.1*ones(test_hand.numberOfJoints, 1);
 % test_hand.jointVelocities = ones(test_hand.numberOfJoints, 1);
 % test_hand.jointVelocities([4 7]) = 1;
 % test_hand.jointAngles(2) = -pi/4;
 % test_hand_chain.jointAngles(2) = -pi/4;
 % test_hand.jointAngles(5) = pi/4;
-test_hand.jointVelocities = randn(test_hand.numberOfJoints, 1);
+% test_hand.jointVelocities = randn(test_hand.numberOfJoints, 1);
 test_hand.updateInternals();
 % test_hand_chain.updateInternals();
 
@@ -132,9 +132,9 @@ diff_hand = GeneralKinematicTree ...
   branch_matrix, ...
   end_effectors, ...
   link_positions, ...
+  link_orientations, ...
   link_masses, ...
-  link_moments_of_inertia, ...
-  link_orientations ...
+  link_moments_of_inertia ...
 );
 
 % numerically calculate the spatialJacobianTemporalDerivatives
@@ -178,7 +178,7 @@ test_hand.bodyJacobians{1}
 bodyJacobianTemporalDerivative
 test_hand.bodyJacobianTemporalDerivatives{1}
 
-return
+% return
 % check end-effector Jacobians
 % diff_hand.updateInternals;
 % delta_theta = 0.00000001;
