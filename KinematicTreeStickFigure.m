@@ -111,7 +111,7 @@ classdef KinematicTreeStickFigure < handle
                 % diagonalize
                 inertia_tensor_link_frame = kinematicTree.generalizedInertiaMatrices{i_joint}(4:6, 4:6);
                 [U, S, V] = svd(inertia_tensor_link_frame);
-                this.linkFrameToLinkInertiaRotations{i_joint} = U^(-1);
+                this.linkFrameToLinkInertiaRotations{i_joint} = U;
                 I_a = S(1, 1);
                 I_b = S(2, 2);
                 I_c = S(3, 3);
@@ -153,6 +153,12 @@ classdef KinematicTreeStickFigure < handle
                     y = 0.5 * b * [1 1 1 1 -1 -1 -1 -1]';
                     z = 0.5 * c * [-1 -1 1 1 1 1 -1 -1]';
                     vertices = [x y z];
+                    
+                    volume = a*b*c;
+                    if m > 0
+                        density = m / volume;
+                        disp(['segment ' num2str(i_joint) ' density: ' num2str(density) ' kg/m^3']);
+                    end
 
 %                     patch('Faces', faces, 'Vertices', vertices);
 %                     patch('Faces', faces, 'Vertices', vertices', 'FaceColor', colr, 'FaceAlpha', alph);
