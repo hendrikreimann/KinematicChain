@@ -69,20 +69,20 @@ link_masses = ones(degrees_of_freedom, 1);
 link_moments_of_inertia = [[1 5 5] ; repmat([1 1 .5], degrees_of_freedom-1, 1)] * 0.01;
 
 omega = [sqrt(2)/2; sqrt(2)/2; 0];
-link_orientations = {[0 0 1; 0 1 0; -1 0 0], rodrigues(omega, pi/2), eye(3)};
+link_orientations = {[1 0 0; 0 1 0; 0 0 1], rodrigues(omega, pi/2), eye(3)};
 % define link inertia
 mass_1 = 10;
 generalized_inertia_matrix_1 = ...
   [ ...
     mass_1*eye(3) zeros(3); ...
-    zeros(3) [1 0 0; 0 1 0; 0 0 .3] ...
+    zeros(3) [1 .2 0; .2 1 .2; 0 .2 1] ...
   ];
 generalized_inertia_matrix_2 = ...
   [ ...
     mass_1*eye(3) zeros(3); ...
-    zeros(3) rodrigues(omega, pi/2)*[1 0 0; 0 1 0; 0 0 .3] ...
+    zeros(3) rodrigues(omega, pi/2)*[1 0 0; 0 1 0; 0 0 1] ...
   ];
-generalized_link_inertia_matrices = {generalized_inertia_matrix_1; generalized_inertia_matrix_1; generalized_inertia_matrix_2};
+generalized_link_inertia_matrices = {generalized_inertia_matrix_1; generalized_inertia_matrix_2; generalized_inertia_matrix_2};
 
 
 
@@ -108,7 +108,11 @@ test_hand.jointVelocities = 0.1*ones(test_hand.numberOfJoints, 1);
 test_hand.updateInternals();
 
 sceneBound = 2.5*[-1; 1; -1; 1; -1; 1];
-stickFigure = KinematicTreeStickFigure(test_hand, sceneBound);
+% shapeTypes = {'ellipsoid', 'cylinder-x', 'cylinder-x'};
+% shapeTypes = {'cylinder-x', 'cylinder-x', 'cylinder-x'};
+% shapeTypes = {'cylinder-x', 'ellipsoid', 'ellipsoid'};
+shapeTypes = {'cuboid', 'cuboid', 'cuboid'};
+stickFigure = KinematicTreeStickFigure(test_hand, sceneBound, shapeTypes);
 set(gca, 'xlim', [stickFigure.sceneBound(1), stickFigure.sceneBound(2)], ...
          'ylim', [stickFigure.sceneBound(3), stickFigure.sceneBound(4)], ...
          'zlim',[stickFigure.sceneBound(5), stickFigure.sceneBound(6)]);
@@ -117,7 +121,7 @@ stickFigure.showLinkMassEllipsoids = true;
 % view(-130, 20);
 stickFigure.update();
 
-return
+% return
 
 timeStep = 0.01;
 counter = 0;

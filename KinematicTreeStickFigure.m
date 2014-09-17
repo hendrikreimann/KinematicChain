@@ -16,9 +16,9 @@ classdef KinematicTreeStickFigure < handle
         markerPlots;
         fixedMarkerPlots;
         markerConnectionLinePlots;
-        linkMassEllipsoids;
-        linkMassEllipsoidSurfs;
-        linkMassEllipsoidResolution = 15;
+        linkMassShapeData;
+        linkMassShapeSurfs;
+        linkMassShapeResolution = 15;
         linkFrameToLinkInertiaRotations;
         
         % graphics
@@ -34,7 +34,7 @@ classdef KinematicTreeStickFigure < handle
         showMarkers = true;
     end 
     methods
-        function this = KinematicTreeStickFigure(kinematicTree, sceneBound, axesHandle)
+        function this = KinematicTreeStickFigure(kinematicTree, sceneBound, linkShapes, axesHandle)
             this.kinematicTree = kinematicTree;
             kinematicTree.updateLinkVisualizationData();
             if nargin < 2
@@ -43,6 +43,12 @@ classdef KinematicTreeStickFigure < handle
                 this.sceneBound = sceneBound;
             end
             if nargin < 3
+                linkShapes = cell(1, kinematicTree.numberOfJoints);
+                for i_joint = 1 : kinematicTree.numberOfJoints
+                    linkShapes{i_joint} = 'ellipsoid';
+                end
+            end
+            if nargin < 4
                 this.sceneFigure = figure( 'Position', [500, 500, 600, 600], 'Name', 'scene' );
                 this.sceneAxes = axes( 'Position', [ 0.1 0.1 0.8 0.8 ]);
             else
@@ -97,41 +103,89 @@ classdef KinematicTreeStickFigure < handle
                 this.markerConnectionLinePlots(i_line) = plot3([0 0], [0 0], [0 0], 'k', 'linewidth', 1);
             end
             
-            % set up link mass ellipsoids
+            % set up link mass shapes
             this.linkFrameToLinkInertiaRotations = cell(kinematicTree.numberOfJoints, 1);
             for i_joint = 1 : kinematicTree.numberOfJoints
                 m = kinematicTree.linkMasses(i_joint);
                 
                 % diagonalize
                 inertia_tensor_link_frame = kinematicTree.generalizedInertiaMatrices{i_joint}(4:6, 4:6);
-                [U,S,V] = svd(inertia_tensor_link_frame);
-                this.linkFrameToLinkInertiaRotations{i_joint} = U;
+                [U, S, V] = svd(inertia_tensor_link_frame);
+                this.linkFrameToLinkInertiaRotations{i_joint} = U^(-1);
                 I_a = S(1, 1);
                 I_b = S(2, 2);
                 I_c = S(3, 3);
                 
-%                 I_a = kinematicTree.generalizedInertiaMatrices{i_joint}(4, 4);
-%                 I_b = kinematicTree.generalizedInertiaMatrices{i_joint}(5, 5);
-%                 I_c = kinematicTree.generalizedInertiaMatrices{i_joint}(6, 6);
-                a = sqrt((5/(2*m)*(- I_a + I_b + I_c)));
-                b = sqrt((5/(2*m)*(+ I_a - I_b + I_c)));
-                c = sqrt((5/(2*m)*(+ I_a + I_b - I_c)));
+                if strcmp(linkShapes{i_joint}, 'ellipsoid');
                 
-                [x,y,z] = ...
-                  ellipsoid ...
-                  ( ...
-                    0, 0, 0, ...
-                    a, b, c, ...
-                    this.linkMassEllipsoidResolution ...
-                  );
-                ellipsoid_data = ones(4, this.linkMassEllipsoidResolution+1, this.linkMassEllipsoidResolution+1);
-                ellipsoid_data(1, :, :) = x;
-                ellipsoid_data(2, :, :) = y;
-                ellipsoid_data(3, :, :) = z;
-                
-                this.linkMassEllipsoids{i_joint} = ellipsoid_data;
-                
-                this.linkMassEllipsoidSurfs(i_joint) = surf(x, y, z);
+                    a = sqrt((5/(2*m)*(- I_a + I_b + I_c)));
+                    b = sqrt((5/(2*m)*(+ I_a - I_b + I_c)));
+                    c = sqrt((5/(2*m)*(+ I_a + I_b - I_c)));
+
+                    [x,y,z] = ...
+                      ellipsoid ...
+                      ( ...
+                        0, 0, 0, ...
+                        a, b, c, ...
+                        this.linkMassShapeResolution ...
+                      );
+                    shape_data = ones(4, this.linkMassShapeResolution+1, this.linkMassShapeResolution+1);
+                    shape_data(1, :, :) = x;
+                    shape_data(2, :, :) = y;
+                    shape_data(3, :, :) = z;
+
+                    this.linkMassShapeData{i_joint} = shape_data;
+                    this.linkMassShapeSurfs(i_joint) = surf(x, y, z);
+                elseif strcmp(linkShapes{i_joint}, 'cuboid');
+                    a = sqrt((6/m * (- I_a + I_b + I_c)));
+                    b = sqrt((6/m * (+ I_a - I_b + I_c)));
+                    c = sqrt((6/m * (+ I_a + I_b - I_c)));
+                    faces = ...
+                      [ ...
+                         1     2     3     4; ...
+                         5     6     7     8; ...
+                         4     3     6     5; ...
+                         3     2     7     6; ...
+                         2     1     8     7; ...
+                         1     4     5     8; ...
+                      ];
+                    x = 0.5 * a * [-1 1 1 -1 -1 1 1 -1]';
+                    y = 0.5 * b * [1 1 1 1 -1 -1 -1 -1]';
+                    z = 0.5 * c * [-1 -1 1 1 1 1 -1 -1]';
+                    vertices = [x y z];
+
+%                     patch('Faces', faces, 'Vertices', vertices);
+%                     patch('Faces', faces, 'Vertices', vertices', 'FaceColor', colr, 'FaceAlpha', alph);
+                    this.linkMassShapeSurfs(i_joint) = patch('Faces', faces, 'Vertices', vertices, 'FaceColor', [1 0.6 0]);
+                    
+                    shape_data = ones(4, 4, 6);
+                    shape_data(1, :, :) = get(this.linkMassShapeSurfs(i_joint), 'xdata');
+                    shape_data(2, :, :) = get(this.linkMassShapeSurfs(i_joint), 'ydata');
+                    shape_data(3, :, :) = get(this.linkMassShapeSurfs(i_joint), 'zdata');
+
+                    this.linkMassShapeData{i_joint} = shape_data;
+                    
+                    
+%                     x = [-a -a; -a -a; a a; a -a;];
+%                     y = [-b -b; b b; -b -b; b b];
+%                     z = [-c c; -c c; -c c; -c c];
+%                     surf(x, y, z);
+%                     
+%                     [x, y, z] = meshgrid([-a a], [-b b], [-c c]);
+%                     
+%                     
+%                     [z, y, x] = cylinder; % around the x-axis
+%                     x = l * (x - 1/2);
+%                     y = y * b/2;
+%                     z = z * c/2;
+% 
+%                     shape_data = ones(4, 2, 20+1);
+%                     shape_data(1, :, :) = x;
+%                     shape_data(2, :, :) = y;
+%                     shape_data(3, :, :) = z;
+% 
+%                     this.linkMassShapeData{i_joint} = shape_data;
+                end
             end
             
             
@@ -143,7 +197,8 @@ classdef KinematicTreeStickFigure < handle
             ylabel('y');
             zlabel('z');
             
-            colormap cool
+%             colormap cool
+            colormap autumn
             alpha(.4)
         end
         
@@ -208,28 +263,29 @@ classdef KinematicTreeStickFigure < handle
                 end
             end
             
-            % update segment mass ellipsoids
+            % update segment mass shapes
             for i_joint = 1 : this.kinematicTree.numberOfJoints
                 if this.showLinkMassEllipsoids && (this.kinematicTree.linkMasses(i_joint) > 0)
                     % transform ellipsoid
                     link_transformation = this.kinematicTree.linkTransformations{i_joint};
                     inertia_transformation = [this.linkFrameToLinkInertiaRotations{i_joint} zeros(3, 1); 0 0 0 1];
-                    ellipsoid_transformed = zeros(size(this.linkMassEllipsoids{i_joint}));
-                    for i_point = 1 : this.linkMassEllipsoidResolution + 1
-                        for j_point = 1 : this.linkMassEllipsoidResolution + 1
-                            point = squeeze(this.linkMassEllipsoids{i_joint}(:, i_point, j_point));
-                            ellipsoid_transformed(:, i_point, j_point) = link_transformation * inertia_transformation * point;
+                    shape_transformed = zeros(size(this.linkMassShapeData{i_joint}));
+                    mass_shape_data = this.linkMassShapeData{i_joint};
+                    for i_point = 1 : size(mass_shape_data, 2)
+                        for j_point = 1 : size(mass_shape_data, 3)
+                            point = squeeze(mass_shape_data(:, i_point, j_point));
+                            shape_transformed(:, i_point, j_point) = link_transformation * inertia_transformation * point;
                         end
                     end
                     
                     set( ...
-                         this.linkMassEllipsoidSurfs(i_joint), ...
-                         'Xdata', squeeze(ellipsoid_transformed(1, :, :)), ...
-                         'Ydata', squeeze(ellipsoid_transformed(2, :, :)), ...
-                         'Zdata', squeeze(ellipsoid_transformed(3, :, :)) ...
+                         this.linkMassShapeSurfs(i_joint), ...
+                         'Xdata', squeeze(shape_transformed(1, :, :)), ...
+                         'Ydata', squeeze(shape_transformed(2, :, :)), ...
+                         'Zdata', squeeze(shape_transformed(3, :, :)) ...
                        );
                 else
-                    set(this.linkMassEllipsoidSurfs(i_joint), 'visible', 'off');
+                    set(this.linkMassShapeSurfs(i_joint), 'visible', 'off');
                 end
             end
                 
