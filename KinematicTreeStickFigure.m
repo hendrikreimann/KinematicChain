@@ -116,6 +116,31 @@ classdef KinematicTreeStickFigure < handle
                 I_b = S(2, 2);
                 I_c = S(3, 3);
                 
+%                 if i_joint == 1
+%                     disp('inertia_tensor_link_frame : ')
+%                     disp(num2str(inertia_tensor_link_frame));
+%                     disp('U_1 : ')
+%                     disp(num2str(U));
+%                 end
+%                 if i_joint == 10
+%                     disp('inertia_tensor_link_frame : ')
+%                     disp(num2str(inertia_tensor_link_frame));
+%                     disp('U_10 : ')
+%                     disp(num2str(U));
+%                 end
+%                 if i_joint == 12
+%                     disp('inertia_tensor_link_frame : ')
+%                     disp(num2str(inertia_tensor_link_frame));
+%                     disp('U_12 : ')
+%                     disp(num2str(U));
+%                 end
+%                 if i_joint == 21
+%                     disp('inertia_tensor_link_frame : ')
+%                     disp(num2str(inertia_tensor_link_frame));
+%                     disp('U_21 : ')
+%                     disp(num2str(U));
+%                 end
+                
                 if strcmp(linkShapes{i_joint}, 'ellipsoid');
                 
                     a = sqrt((5/(2*m)*(- I_a + I_b + I_c)));

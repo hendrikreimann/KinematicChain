@@ -39,11 +39,8 @@ classdef GeneralKinematicTree < KinematicTree
                 branchMatrix = 1;
                 endEffectorPositions = {[2; 0; 0]};
                 linkCenters = {[1; 0; 0]};
-%                 linkMasses = 1;
-%                 linkMomentsOfInertia = [1 1 1];
                 linkOrientations = {eye(3)};
-                varargin = {1; [1 1 1]};
-                
+                varargin = {1, [1 1 1]};
             end
             degrees_of_freedom = length(jointPositions);
             obj = obj@KinematicTree(degrees_of_freedom, branchMatrix);
