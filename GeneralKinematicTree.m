@@ -578,10 +578,13 @@ classdef GeneralKinematicTree < KinematicTree
             p_skew = skewVectorToMatrix(p);
             p_dot_skew = skewVectorToMatrix(p_dot);
             coordinate_frame_adjoint_dot = [R_dot p_dot_skew*R+p_skew*R_dot; zeros(3) R_dot];
-            bodyJacobianTemporalDerivative = ...
-              invertAdjoint(createAdjointTransformation(coordinateFrame)) * ...
-              (J_s_dot - coordinate_frame_adjoint_dot * bodyJacobian);
+            if nargout == 2
+                bodyJacobianTemporalDerivative = ...
+                  invertAdjoint(createAdjointTransformation(coordinateFrame)) * ...
+                  (J_s_dot - coordinate_frame_adjoint_dot * bodyJacobian);
+            end
         end
+        
         
         
 %         function calculateEndEffectorAcceleration(obj)
