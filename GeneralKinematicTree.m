@@ -169,9 +169,9 @@ classdef GeneralKinematicTree < KinematicTree
             
             % update second-order temporal derivatives
             obj.calculateSpatialJacobianTemporalDerivative();
-%             obj.calculateEndEffectorAcceleration();
             obj.calculateEndEffectorJacobianTemporalDerivative();
             obj.calculateBodyJacobianTemporalDerivatives();
+            obj.calculateEndEffectorAccelerations();
             
         end
         function addMarker(obj, joint_index, marker_reference_position, visualization_color)
@@ -298,6 +298,13 @@ classdef GeneralKinematicTree < KinematicTree
         function calculateEndEffectorVelocities(obj)
             for i_eef = 1 : obj.numberOfBranches
                 obj.endEffectorVelocities{i_eef} = obj.endEffectorJacobians{i_eef} * obj.jointVelocities;
+            end
+        end
+        function calculateEndEffectorAccelerations(obj)
+            for i_eef = 1 : obj.numberOfBranches
+                obj.endEffectorAccelerations{i_eef} ...
+                    = obj.endEffectorJacobians{i_eef} * obj.jointAccelerations ...
+                      + obj.endEffectorJacobianTemporalDerivatives{i_eef} * obj.jointVelocities;
             end
         end
         function calculateLinkTransformations(obj)

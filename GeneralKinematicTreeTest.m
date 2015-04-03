@@ -12,7 +12,7 @@ classdef GeneralKinematicTreeTest < matlab.unittest.TestCase
             joint_axes = {[0; 1; 0], [0; 1; 0], [0; 1; 0], [0; 1; 0]};
             joint_types = [1 1 1 1];
             branch_matrix = [1 1 1 1];
-            end_effector = {[0; 2; 8]};
+            eef = {[0; 2; 8]};
             link_centers = {[0; 2; 1], [0; 2; 3], [0; 2; 5], [0; 2; 7]};
             link_orientations = {eye(3), eye(3), eye(3), eye(3)};
             link_masses = [1 1 1 1];
@@ -24,7 +24,7 @@ classdef GeneralKinematicTreeTest < matlab.unittest.TestCase
               joint_axes, ...
               joint_types, ...
               branch_matrix, ...
-              end_effector, ...
+              eef, ...
               link_centers, ...
               link_orientations, ...
               link_masses, ...
@@ -68,14 +68,15 @@ classdef GeneralKinematicTreeTest < matlab.unittest.TestCase
             this.verifyEqual(joint_four_orientation_actual, joint_four_orientation_expected, 'AbsTol', sqrt(eps));
 
             % test the end-effector transformation
-            end_effector_transformation_actual = this.testChain.endEffectorTransformations{1};
-            end_effector_transformation_expected = [0 0 -1 0; 0 1 0 2; 1 0 0 2*sqrt(2); 0 0 0 1];
-            this.verifyEqual(end_effector_transformation_actual, end_effector_transformation_expected, 'AbsTol', sqrt(eps));
+            eef_transformation_actual = this.testChain.endEffectorTransformations{1};
+            eef_transformation_expected = [0 0 -1 0; 0 1 0 2; 1 0 0 2*sqrt(2); 0 0 0 1];
+            this.verifyEqual(eef_transformation_actual, eef_transformation_expected, 'AbsTol', sqrt(eps));
         end
         function testJacobians(this)
             this.testChain.jointAngles = [pi/4; pi/4; -3*pi/4; -pi/4];
             this.testChain.updateConfiguration();
             this.testChain.updateJacobians();
+            this.testChain.calculateLinkJacobians();
             
             % test spatial Jacobian
             spatial_jacobian_actual = this.testChain.spatialJacobian;
@@ -83,19 +84,35 @@ classdef GeneralKinematicTreeTest < matlab.unittest.TestCase
             this.verifyEqual(spatial_jacobian_actual, spatial_jacobian_expected, 'AbsTol', sqrt(eps));
             
             % test Cartesian Jacobian
-            end_effector_jacobian_actual = this.testChain.endEffectorJacobians{1};
-            end_effector_jacobian_expected = [2*sqrt(2) sqrt(2) sqrt(2) 0; 0 0 0 0; 0 sqrt(2) sqrt(2)+2 2];
-            this.verifyEqual(end_effector_jacobian_actual, end_effector_jacobian_expected, 'AbsTol', sqrt(eps));
+            eef_jacobian_actual = this.testChain.endEffectorJacobians{1};
+            eef_jacobian_expected = [2*sqrt(2) sqrt(2) sqrt(2) 0; 0 0 0 0; 0 sqrt(2) sqrt(2)+2 2];
+            this.verifyEqual(eef_jacobian_actual, eef_jacobian_expected, 'AbsTol', sqrt(eps));
             
             % test body Jacobian
             body_jacobian_actual = this.testChain.bodyJacobians{1};
             body_jacobian_expected = [0 sqrt(2) sqrt(2)+2 2; 0 0 0 0; -2*sqrt(2) -sqrt(2) -sqrt(2) 0; 0 0 0 0; 1 1 1 1; 0 0 0 0];
             this.verifyEqual(body_jacobian_actual, body_jacobian_expected, 'AbsTol', sqrt(eps));
             
+            % test link Jacobians
+            link_one_jacobian_actual = this.testChain.linkJacobians{1};
+            link_one_jacobian_expected = [sqrt(1/2) 0 0 0; 0 0 0 0; -sqrt(1/2) 0 0 0];
+            this.verifyEqual(link_one_jacobian_actual, link_one_jacobian_expected, 'AbsTol', sqrt(eps));
             
+            link_two_jacobian_actual = this.testChain.linkJacobians{2};
+            link_two_jacobian_expected = [sqrt(2) 0 0 0; 0 0 0 0; -1-sqrt(2) -1 0 0];
+            this.verifyEqual(link_two_jacobian_actual, link_two_jacobian_expected, 'AbsTol', sqrt(eps));
+            
+            link_three_jacobian_actual = this.testChain.linkJacobians{3};
+            link_three_jacobian_expected = [3*sqrt(1/2) sqrt(1/2) sqrt(1/2) 0; 0 0 0 0; -2-sqrt(1/2) -2+sqrt(1/2) sqrt(1/2) 0];
+            this.verifyEqual(link_three_jacobian_actual, link_three_jacobian_expected, 'AbsTol', sqrt(eps));
+            
+            link_four_jacobian_actual = this.testChain.linkJacobians{4};
+            link_four_jacobian_expected = [2*sqrt(2) sqrt(2) sqrt(2) 0; 0 0 0 0; -1 -1+sqrt(2) 1+sqrt(2) 1];
+            this.verifyEqual(link_four_jacobian_actual, link_four_jacobian_expected, 'AbsTol', sqrt(eps));
         end
         function testDynamicMatrices(this)
             this.testChain.jointAngles = [pi/4; pi/4; -3*pi/4; -pi/4];
+            this.testChain.jointVelocities = ones(4, 1);
             this.testChain.updateInternals();
             
             % test inertia matrix
@@ -105,14 +122,64 @@ classdef GeneralKinematicTreeTest < matlab.unittest.TestCase
             
             % test coriolis matrix
             coriolis_matrix_actual = this.testChain.coriolisMatrix;
-            coriolis_matrix_expected = [33.656854249492369 14 3.171572875253812 0; 14 8.343145750507624 4.585786437626910 1.414213562373099; 3.171572875253816 4.585786437626910 10.828427124746195 3.414213562373098; 0 1.414213562373096 3.414213562373095 2];
+            coriolis_matrix_expected = [14.828427124746188 15.171572875253814 37.798989873223334 11.313708498984756; 5.313708498984761 5.656854249492382 14.142135623730951 5.656854249492383; -14.485281374238571 -7.071067811865478 1.414213562373095 5.656854249492379; -5.656854249492378 -4.242640687119286 -4.242640687119286 0];
             this.verifyEqual(coriolis_matrix_actual, coriolis_matrix_expected, 'AbsTol', sqrt(eps));
             
             % test gravitation matrix
-            gravitation_matrix_actual = this.testChain.gravitationMatrix;
-            gravitation_matrix_expected = [33.656854249492369 14 3.171572875253812 0; 14 8.343145750507624 4.585786437626910 1.414213562373099; 3.171572875253816 4.585786437626910 10.828427124746195 3.414213562373098; 0 1.414213562373096 3.414213562373095 2];
+            gravitation_matrix_actual = this.testChain.gravitationalTorqueMatrix;
+            gravitation_matrix_expected = [-66.963994862892221; -18.423553852830835; 30.609696147169160; 9.806649999999999];
             this.verifyEqual(gravitation_matrix_actual, gravitation_matrix_expected, 'AbsTol', sqrt(eps));
-        end        
+        end
+        function testDerivatives(this)
+            this.testChain.jointAngles = [pi/4; pi/4; -3*pi/4; -pi/4];
+            this.testChain.jointVelocities = ones(4, 1);
+            this.testChain.jointAccelerations = [1; 2; 3; 4];
+            this.testChain.updateInternals();
+            
+            % store old values
+            joint_angles = this.testChain.jointAngles;
+            joint_velocities = this.testChain.jointVelocities;
+            eef_position = this.testChain.endEffectorPositions{1};
+            eef_velocity = this.testChain.endEffectorVelocities{1};
+            eef_acceleration = this.testChain.endEffectorAccelerations{1};
+            spatial_jacobian = this.testChain.spatialJacobian;
+            body_jacobian = this.testChain.bodyJacobians{1};
+            spatial_jacobian_dot = this.testChain.spatialJacobianTemporalDerivative;
+            body_jacobian_dot = this.testChain.bodyJacobianTemporalDerivatives{1};
+            
+            % delta step
+            delta_t = 1e-08;
+            this.testChain.jointAngles = joint_angles + delta_t*joint_velocities + delta_t^2*this.testChain.jointAccelerations;
+            this.testChain.jointVelocities = joint_velocities + delta_t*this.testChain.jointAccelerations;
+            this.testChain.updateKinematics();
+            
+            % get new values
+            joint_angles_new = this.testChain.jointAngles;
+            joint_velocities_new = this.testChain.jointVelocities;
+            eef_position_new = this.testChain.endEffectorPositions{1};
+            eef_velocity_new = this.testChain.endEffectorVelocities{1};
+            spatial_jacobian_new = this.testChain.spatialJacobian;
+            body_jacobian_new = this.testChain.bodyJacobians{1};
+            
+            % calculate finite differences
+            joint_velocities_numerical = (joint_angles_new - joint_angles) * delta_t^(-1);
+            joint_acceleration_numerical = (joint_velocities_new - joint_velocities) * delta_t^(-1);
+            eef_velocity_numerical = (eef_position_new - eef_position) * delta_t^(-1);
+            eef_acceleration_numerical = (eef_velocity_new - eef_velocity) * delta_t^(-1);
+            spatial_jacobian_dot_numerical = (spatial_jacobian_new - spatial_jacobian) * delta_t^(-1);
+            body_jacobian_dot_numerical = (body_jacobian_new - body_jacobian) * delta_t^(-1);
+            
+            % compare
+            this.verifyEqual(joint_velocities_numerical, joint_velocities, 'AbsTol', 1e-6);
+            this.verifyEqual(joint_acceleration_numerical, this.testChain.jointAccelerations, 'AbsTol', 1e-6);
+            this.verifyEqual(eef_velocity_numerical, eef_velocity, 'AbsTol', 1e-6);
+            this.verifyEqual(eef_acceleration_numerical, eef_acceleration, 'AbsTol', 1e-4);
+            
+            this.verifyEqual(spatial_jacobian_dot_numerical, spatial_jacobian_dot, 'AbsTol', 1e-4);
+            this.verifyEqual(body_jacobian_dot_numerical, body_jacobian_dot, 'AbsTol', 1e-4);
+            
+            
+        end
     end
     
 end
