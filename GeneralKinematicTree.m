@@ -96,8 +96,6 @@ classdef GeneralKinematicTree < KinematicTree
                 obj.transformedLinkInertiaMatrices{i_joint} = inverse_adjoint' * obj.generalizedInertiaMatrices{i_joint} * inverse_adjoint;
             end
             
-            
-            
             % generate marker data container
             obj.markerReferencePositions = cell(obj.numberOfJoints, 1);
 
@@ -113,6 +111,12 @@ classdef GeneralKinematicTree < KinematicTree
                 obj.linkVisualizationReferenceData(i_joint).startPoints(:, 1) = start_point;
                 obj.linkVisualizationReferenceData(i_joint).endPoints(:, 1) = end_point;
             end
+            
+            % generate default labels
+            for i_joint = 1 : obj.numberOfJoints
+                obj.jointLabels{i_joint} = ['joint ' num2str(i_joint)];
+            end
+            
         end
         function updateConfiguration(obj)
             % update geometric transformations

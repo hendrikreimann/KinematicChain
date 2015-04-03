@@ -20,6 +20,7 @@ classdef KinematicTreeStickFigure < handle
         linkMassShapeSurfs;
         linkMassShapeResolution = 15;
         linkFrameToLinkInertiaRotations;
+        jointLabels;
         
         % graphics
         jointPlotsColor = [0 0 1];
@@ -32,6 +33,7 @@ classdef KinematicTreeStickFigure < handle
         showLinkMassEllipsoids = false;
         showStickFigure = true;
         showMarkers = true;
+        showJointLabels = false;
     end 
     methods
         function this = KinematicTreeStickFigure(kinematicTree, sceneBound, linkShapes, axesHandle)
@@ -231,7 +233,10 @@ classdef KinematicTreeStickFigure < handle
                 end
             end
             
-            
+            % set up joint labels
+            for i_joint = 1 : kinematicTree.numberOfJoints
+                this.jointLabels(i_joint) = text(0, 0, ['  ' kinematicTree.jointLabels{i_joint}]); 
+            end
             
             
             % groom
@@ -274,6 +279,13 @@ classdef KinematicTreeStickFigure < handle
                 else
                     set(this.linkCenterPlots(i_joint), 'visible', 'off');
                 end
+                if this.showJointLabels
+                    set(this.jointLabels(i_joint), 'position', this.kinematicTree.jointPositions{i_joint}, 'visible', 'on');
+                else
+                    set(this.jointLabels(i_joint), 'visible', 'off');
+
+                end
+                
             end
             for i_joint = 2 : this.kinematicTree.numberOfJoints
                 if this.showStickFigure

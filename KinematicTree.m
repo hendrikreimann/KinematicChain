@@ -47,6 +47,9 @@ classdef KinematicTree < handle
         % adjustable gravitational constant
         standardGravity = 9.80665;
         
+        % labels
+        jointLabels;
+        
     end
     methods (Abstract)
         updateInternals(obj)
