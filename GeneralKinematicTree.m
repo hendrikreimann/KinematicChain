@@ -31,13 +31,13 @@ classdef GeneralKinematicTree < KinematicTree
     end
     methods
 %         function obj = GeneralKinematicTree(jointPositions, jointAxes, jointTypes, branchMatrix, endEffectorPositions, linkCenters, linkMasses, linkMomentsOfInertia, linkOrientations)
-        function obj = GeneralKinematicTree(jointPositions, jointAxes, jointTypes, branchMatrix, endEffectorPositions, linkCenters, linkOrientations, varargin)
+        function obj = GeneralKinematicTree(jointPositions, jointAxes, jointTypes, branchMatrix, endEffectorData, linkCenters, linkOrientations, varargin)
             if nargin == 0
                 jointPositions = {[0; 0; 0]};
                 jointAxes = {[0; 0; 1]};
                 jointTypes = 1;
                 branchMatrix = 1;
-                endEffectorPositions = {[2; 0; 0]};
+                endEffectorData = {[2; 0; 0]};
                 linkCenters = {[1; 0; 0]};
                 linkOrientations = {eye(3)};
                 varargin = {1, [1 1 1]};
@@ -51,7 +51,13 @@ classdef GeneralKinematicTree < KinematicTree
                 obj.referenceJointTwists{i_joint} = createTwist(jointPositions{i_joint}, jointAxes{i_joint}, jointTypes(i_joint));
             end
             for i_eef = 1 : obj.numberOfBranches
-                obj.referenceEndEffectorTransformations{i_eef} = createReferenceTransformation(endEffectorPositions{i_eef}, eye(3));
+                if numel(endEffectorData{i_eef}) == 3
+                    obj.referenceEndEffectorTransformations{i_eef} = createReferenceTransformation(endEffectorData{i_eef}, eye(3));
+                elseif numel(endEffectorData{i_eef}) == 16
+                    obj.referenceEndEffectorTransformations{i_eef} = endEffectorData{i_eef};
+                else
+                    error('end-effectors must be provided either by position (3x1) or transformation (4x4 rigid)')
+                end
                 obj.bodyJacobians{i_eef} = zeros(6, obj.numberOfJoints);
                 obj.bodyJacobianTemporalDerivatives{i_eef} = zeros(6, obj.numberOfJoints);
             end
@@ -587,14 +593,6 @@ classdef GeneralKinematicTree < KinematicTree
         
         
         
-%         function calculateEndEffectorAcceleration(obj)
-%             T1 = obj.spatialJacobianTemporalDerivative * obj.jointVelocities;
-%             T2 = obj.spatialJacobian * obj.jointAccelerations;
-%             S1 = twistCoordinatesToMatrix(T1 + T2) * [obj.endEffectorPosition; 1];
-%             S2 = twistCoordinatesToMatrix(obj.spatialJacobian * obj.jointVelocities) * [obj.endEffectorVelocity; 0];
-%             end_effector_acceleration = S1 + S2;
-%             obj.endEffectorAcceleration = end_effector_acceleration(1:3);
-%         end
         function updateLinkVisualizationData(obj)
 %             for i_joint = 1 : obj.numberOfJoints
 %                 for i_line = 1 : size(obj.linkVisualizationReferenceData(i_joint).startPoints, 2)

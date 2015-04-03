@@ -56,9 +56,9 @@ classdef KinematicTreeStickFigure < handle
                 this.sceneAxes = axesHandle;
             end
             axis equal; hold on;
-            plot3([this.sceneBound(1), this.sceneBound(2)], [0, 0], [0, 0], 'color', 'k','Linewidth', 1, 'Linestyle',':');
-            plot3([0, 0], [this.sceneBound(3), this.sceneBound(4)], [0, 0], 'color', 'k','Linewidth', 1, 'Linestyle',':');
-            plot3([0, 0], [0, 0], [this.sceneBound(5), this.sceneBound(6)], 'color', 'k','Linewidth', 1, 'Linestyle',':');
+            plot3([this.sceneBound(1, 1), this.sceneBound(1, 2)], [0, 0]+mean(sceneBound(2, :)), [0, 0]+mean(sceneBound(3, :)), 'color', 'k','Linewidth', 1, 'Linestyle',':');
+            plot3([0, 0]+mean(sceneBound(1, :)), [this.sceneBound(2, 1), this.sceneBound(2, 2)], [0, 0]+mean(sceneBound(3, :)), 'color', 'k','Linewidth', 1, 'Linestyle',':');
+            plot3([0, 0]+mean(sceneBound(1, :)), [0, 0]+mean(sceneBound(2, :)), [this.sceneBound(3, 1), this.sceneBound(3, 2)], 'color', 'k','Linewidth', 1, 'Linestyle',':');
 
             % set up joint plots
             this.jointPlots = zeros(1, kinematicTree.numberOfJoints);
@@ -96,7 +96,7 @@ classdef KinematicTreeStickFigure < handle
             for i_joint = 1 : kinematicTree.numberOfJoints
                 for i_marker = 1 : size(kinematicTree.markerPositions{i_joint}, 2)
 %                     marker_index = marker_index + 1;
-                    this.markerPlots{i_joint}(i_marker) = plot3(0, 0, 0, 'color', this.kinematicTree.getMarkerVisualizationColor(i_joint, i_marker), 'Linewidth', 2, 'Marker', 'h');
+                    this.markerPlots{i_joint}(i_marker) = plot3(0, 0, 0, 'color', this.kinematicTree.getMarkerVisualizationColor(i_joint, i_marker), 'markersize', 10, 'linewidth', 3, 'Marker', 'x');
                 end
             end
             for i_line = 1 : size(kinematicTree.markerConnectionLineIndices, 1)
@@ -160,7 +160,19 @@ classdef KinematicTreeStickFigure < handle
                     shape_data(3, :, :) = z;
 
                     this.linkMassShapeData{i_joint} = shape_data;
-                    this.linkMassShapeSurfs(i_joint) = surf(x, y, z);
+                    this.linkMassShapeSurfs(i_joint) = surf ...
+                      ( ...
+                        x, y, z, ...
+                        'FaceColor','interp',...
+                        'EdgeColor','none',...
+                        'FaceLighting','gouraud' ...
+                      );
+                    
+                    
+% surf(X,Y,Z,'FaceColor','interp',...
+%    'EdgeColor','none',...
+%    'FaceLighting','gouraud')            
+                    
                 elseif strcmp(linkShapes{i_joint}, 'cuboid');
                     a = sqrt((6/m * (- I_a + I_b + I_c)));
                     b = sqrt((6/m * (+ I_a - I_b + I_c)));
@@ -223,14 +235,21 @@ classdef KinematicTreeStickFigure < handle
             
             
             % groom
-            set(gca,'xlim',[this.sceneBound(1), this.sceneBound(2)],'ylim',[this.sceneBound(3), this.sceneBound(4)], 'zlim',[this.sceneBound(5), this.sceneBound(6)]);
+            set(gca,'xlim',[this.sceneBound(1, 1), this.sceneBound(1, 2)],'ylim',[this.sceneBound(2, 1), this.sceneBound(2, 2)], 'zlim',[this.sceneBound(3, 1), this.sceneBound(3, 2)]);
             xlabel('x');
             ylabel('y');
             zlabel('z');
             
+%             daspect([5 5 1])
+%             axis tight
+            view(-50,30)
+%             camlight left
+%             camlight('headlight')
+            camlight(30, 30)
 %             colormap cool
-            colormap autumn
+%             colormap autumn
             alpha(.4)
+            
         end
         
         function update(this)

@@ -1,8 +1,8 @@
 % compares three different representations of the same physical system
 
-show_visualization = 1;
-simulate_new_data = 1;
-do_inverse_dynamcis = 1;
+show_visualization = 0;
+simulate_new_data = 0;
+do_inverse_dynamics = 1;
 plot_angles = 0;
 plot_torques = 0;
 plot_induced_accelerations = 1;
@@ -88,7 +88,7 @@ test_6dofinv.updateInternals;
 
 %% show visualization
 if show_visualization
-    scene_bound = 4.5*[-1; 1; -1; 1; -1; 1];
+    scene_bound = 4.5*[-1 1; -1 1; -1 1];
 
     stick_figure_3dof = KinematicTreeStickFigure(test_3dof, scene_bound);
 %     stick_figure_3dof.showLinkMassEllipsoids = true;
@@ -211,6 +211,9 @@ if simulate_new_data
         timeseries_joint_angles_3dof(i_time, :) = test_3dof.jointAngles;
         timeseries_joint_velocity_3dof(i_time, :) = test_3dof.jointVelocities;
         timeseries_joint_acceleration_3dof(i_time, :) = test_3dof.jointAccelerations;
+        timeseries_joint_angles_6dof(i_time, :) = test_6dof.jointAngles;
+        timeseries_joint_velocity_6dof(i_time, :) = test_6dof.jointVelocities;
+        timeseries_joint_acceleration_6dof(i_time, :) = test_6dof.jointAccelerations;
         timeseries_joint_angles_6dofinv(i_time, :) = test_6dofinv.jointAngles;
         timeseries_joint_velocity_6dofinv(i_time, :) = test_6dofinv.jointVelocities;
         timeseries_joint_acceleration_6dofinv(i_time, :) = test_6dofinv.jointAccelerations;
@@ -227,7 +230,7 @@ if simulate_new_data
 end
 
 %% inverse dynamics
-if do_inverse_dynamcis
+if do_inverse_dynamics
     timeseries_joint_torques_applied_3dof = zeros(number_of_time_steps, 3);
     timeseries_joint_torques_gravity_3dof = zeros(number_of_time_steps, 3);
     timeseries_joint_torques_coriolis_3dof = zeros(number_of_time_steps, 3);
@@ -239,7 +242,6 @@ if do_inverse_dynamcis
     timeseries_accelerations_induced_by_movement_3dof = zeros(number_of_time_steps, 3);
     timeseries_accelerations_induced_by_constraint_3dof = zeros(number_of_time_steps, 3);
     
-
     timeseries_joint_torques_applied_6dof = zeros(number_of_time_steps, 6);
     timeseries_joint_torques_gravity_6dof = zeros(number_of_time_steps, 6);
     timeseries_joint_torques_coriolis_6dof = zeros(number_of_time_steps, 6);
@@ -329,6 +331,30 @@ if do_inverse_dynamcis
 
         
         
+%         % inverse dynamics - 6dof - alternative, checking whether this way works
+%         G = - M_6dof*test_6dof.jointAccelerations - test_6dof.coriolisMatrix*test_6dof.jointVelocities - test_6dof.gravitationalTorqueMatrix;
+%         k_c = rank(A_6dof);
+%         k_v = 3;
+%         [~, ~, V_c] = svd(A_6dof);
+%         C_c = V_c(:, k_c+1:end);
+%         B_v = [eye(k_v); zeros(test_6dof.numberOfJoints - k_v, k_v)];
+%         k_w = rank([B_v C_c]);
+%         [~, ~, V_w] = svd([B_v C_c]');
+%         C_w = V_w(:, k_w+1:end);
+%         D = [B_v C_w];
+% 
+%         lambda = pinv(D'*A_6dof')*D'*G;
+%         
+%         
+%         F = M_6dof*test_6dof.jointAccelerations + test_6dof.coriolisMatrix*test_6dof.jointVelocities + test_6dof.gravitationalTorqueMatrix + A_6dof'*lambda;
+%         test_zero = D' * F;
+        
+        
+        
+        
+        
+        
+        
         % inverse dynamics 6dofinv
         theta_prime = timeseries_joint_angles_6dofinv(i_time-1, :)';
         theta_dot_prime = timeseries_joint_velocity_6dofinv(i_time-1, :)';
@@ -385,6 +411,13 @@ if do_inverse_dynamcis
         timeseries_accelerations_induced_by_gravity_6dofinv(i_time, :) = - test_6dofinv.inertiaMatrix^(-1) * P_6dofinv * test_6dofinv.gravitationalTorqueMatrix;
         timeseries_accelerations_induced_by_movement_6dofinv(i_time, :) = - test_6dofinv.inertiaMatrix^(-1) * (P_6dofinv*test_6dofinv.coriolisMatrix + A_6dofinv' * (A_6dofinv*M_6dofinv^(-1)*A_6dofinv')^(-1) * A_6dofinvDot) * test_6dofinv.jointVelocities;
 
+        inertia_times_acceleration_6dof = M_6dof * test_6dof.jointAccelerations;
+        right_side_6dof = P_6dof * tau_6dof - P_6dof * test_6dof.gravitationalTorqueMatrix - (P_6dof*test_6dof.coriolisMatrix + A_6dof' * (A_6dof*M_6dof^(-1)*A_6dof')^(-1) * A_6dofDot) * test_6dof.jointVelocities;
+        error_6dof = norm(inertia_times_acceleration_6dof - right_side_6dof);
+        
+        inertia_times_acceleration_6dofinv = M_6dofinv * test_6dofinv.jointAccelerations;
+        right_side_6dofinv = P_6dofinv * tau_6dofinv - P_6dofinv * test_6dofinv.gravitationalTorqueMatrix - (P_6dofinv*test_6dofinv.coriolisMatrix + A_6dofinv' * (A_6dofinv*M_6dofinv^(-1)*A_6dofinv')^(-1) * A_6dofinvDot) * test_6dofinv.jointVelocities;
+        error_6dofinv = norm(inertia_times_acceleration_6dofinv - right_side_6dofinv);
         
 %         test_3dof.inertiaMatrix*test_3dof.jointAccelerations ...
 %             + P_3dof * test_3dof.coriolisMatrix*test_3dof.jointVelocities ...
@@ -492,6 +525,9 @@ if plot_induced_accelerations
         plot(timeseries_accelerations_induced_by_gravity_6dof(:, i_joint+3), 'g', 'linewidth', 2, 'displayname', 'gravity')
         plot(timeseries_accelerations_induced_by_movement_6dof(:, i_joint+3), 'c', 'linewidth', 2, 'displayname', 'velocity-dependent')
 %         plot(timeseries_accelerations_induced_by_constraint_6dof(:, i_joint+3), 'b', 'linewidth', 2, 'displayname', 'constraint')
+        
+        plot(timeseries_joint_acceleration_6dof(:, i_joint+3), 'b', 'linewidth', 2, 'displayname', 'net acceleration')
+        plot(timeseries_accelerations_induced_by_applied_6dof(:, i_joint+3) + timeseries_accelerations_induced_by_gravity_6dof(:, i_joint+3) + timeseries_accelerations_induced_by_movement_6dof(:, i_joint+3), 'm-.', 'linewidth', 2, 'displayname', 'sum')
         legend('toggle')
         
         figure; axes; hold on; title(['induced accelerations, ' joint_labels(i_joint) ' joint - 6dofinv'])
@@ -499,9 +535,12 @@ if plot_induced_accelerations
         plot(timeseries_accelerations_induced_by_gravity_6dofinv(:, 6 - i_joint + 1), 'g', 'linewidth', 2, 'displayname', 'gravity')
         plot(timeseries_accelerations_induced_by_movement_6dofinv(:,6 - i_joint + 1), 'c', 'linewidth', 2, 'displayname', 'velocity-dependent')
 %         plot(timeseries_accelerations_induced_by_constraint_6dofinv(:, i_joint+3), 'b', 'linewidth', 2, 'displayname', 'constraint')
+        
+        plot(timeseries_joint_acceleration_6dofinv(:, 6 - i_joint + 1), 'b', 'linewidth', 2, 'displayname', 'net acceleration')
+        plot(timeseries_accelerations_induced_by_applied_6dofinv(:, 6 - i_joint + 1) + timeseries_accelerations_induced_by_gravity_6dofinv(:, 6 - i_joint + 1) + timeseries_accelerations_induced_by_movement_6dofinv(:, 6 - i_joint + 1), 'm-.', 'linewidth', 2, 'displayname', 'sum')
         legend('toggle')
     end
-
+    distFig('rows', 3)
 
 
 
