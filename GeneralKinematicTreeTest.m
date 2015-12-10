@@ -295,6 +295,28 @@ classdef GeneralKinematicTreeTest < matlab.unittest.TestCase
             
             
         end
+        function testComJacobian(this)
+            this.testTree.jointAngles = [pi/4; pi/4; -3*pi/4; -pi/4; pi/3];
+            this.testTree.updateInternals();
+            
+            % store old values
+            joint_angles_0 = this.testTree.jointAngles;
+            com_0 = this.testTree.calculateCenterOfMassPosition();
+            
+            % calculate Jacobian
+            delta_theta = 1e-08;
+            J_com = this.testTree.calculateCenterOfMassJacobian();
+            J_com_numerical = zeros(size(J_com));
+            for i_joint = 1 : this.testTree.numberOfJoints
+                joint_angles_delta = joint_angles_0;
+                joint_angles_delta(i_joint) = joint_angles_delta(i_joint) + delta_theta;
+                this.testTree.jointAngles = joint_angles_delta;
+                this.testTree.updateInternals();
+                com_delta = this.testTree.calculateCenterOfMassPosition();
+                J_com_numerical(:, i_joint) = (com_delta - com_0) * delta_theta^(-1);
+            end
+            this.verifyEqual(J_com_numerical, J_com, 'AbsTol', 1e-6);
+        end
     end
     
 end
