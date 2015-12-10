@@ -1,6 +1,6 @@
 % script to arm whether the forces from two linearly independent constraints can be calculated independently
 
-show_visualization = 0;
+show_visualization = 1;
 
 ankle = [0; 0; 1]; knee = [0; 0; 2]; hip = [0; 0; 3];
 contact = [0; 0; 0];

@@ -72,7 +72,7 @@ test_tree = GeneralKinematicTree ...
 % test_chain.updateInternals();
 % test_tree.updateInternals();
 
-scene_bound = 2.5*[-1; 1; -1; 1; -1; 1];
+scene_bound = 2.5*[-1 1; -1 1; -1 1];
 
 stick_figure_chain = KinematicTreeStickFigure(test_chain, scene_bound);
 view([0, 0, 1]);

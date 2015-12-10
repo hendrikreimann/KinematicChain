@@ -1,7 +1,7 @@
 % compares three different representations of the same physical system
 
-show_visualization = 0;
-simulate_new_data = 0;
+show_visualization = 1;
+simulate_new_data = 1;
 do_inverse_dynamics = 1;
 plot_angles = 0;
 plot_torques = 0;
