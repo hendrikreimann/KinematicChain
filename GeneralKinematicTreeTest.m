@@ -135,6 +135,31 @@ classdef GeneralKinematicTreeTest < matlab.unittest.TestCase
             link_four_jacobian_actual = this.testChain.linkJacobians{4};
             link_four_jacobian_expected = [2*sqrt(2) sqrt(2) sqrt(2) 0; 0 0 0 0; -1 -1+sqrt(2) 1+sqrt(2) 1];
             this.verifyEqual(link_four_jacobian_actual, link_four_jacobian_expected, 'AbsTol', sqrt(eps));
+            
+            % test CoM Jacobian
+            theta_0 = [pi/4; pi/4; -3*pi/4; -pi/4];
+            this.testChain.jointAngles = theta_0;
+            this.testChain.updateConfiguration();
+            this.testChain.updateJacobians();
+            this.testChain.calculateLinkJacobians();
+            com_0 = this.testChain.calculateCenterOfMassPosition;
+            com_jacobian_actual = zeros(3, this.testChain.numberOfJoints);
+            
+            delta_angle = 1e-8;
+            for i_joint = 1 : this.testChain.numberOfJoints
+                theta_delta = theta_0;
+                theta_delta(i_joint) = theta_0(i_joint) + delta_angle;
+                this.testChain.jointAngles = theta_delta;
+                this.testChain.updateConfiguration();
+                this.testChain.updateJacobians();
+                this.testChain.calculateLinkJacobians();
+                com_delta = this.testChain.calculateCenterOfMassPosition;
+                com_jacobian_actual(:, i_joint) = (com_delta - com_0) * delta_angle^(-1);
+            end
+            com_jacobian_expected = this.testChain.calculateCenterOfMassJacobian;
+            this.verifyEqual(com_jacobian_actual, com_jacobian_expected, 'AbsTol', sqrt(sqrt(eps)));
+            
+            
         end
         function testDynamicMatricesChain(this)
             this.testChain.jointAngles = [pi/4; pi/4; -3*pi/4; -pi/4];

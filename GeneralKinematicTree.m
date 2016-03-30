@@ -30,17 +30,7 @@ classdef GeneralKinematicTree < KinematicTree
         markerConnectionLineIndices
     end
     methods
-        function obj = GeneralKinematicTree ...
-              ( ...
-                jointPositions, ...
-                jointAxes, ...
-                jointTypes, ...
-                branchMatrix, ...
-                endEffectorData, ...
-                linkCenters, ...
-                linkOrientations, ...
-                varargin ...
-              )
+        function obj = GeneralKinematicTree(jointPositions, jointAxes, jointTypes, branchMatrix, endEffectorData, linkCenters, linkOrientations, varargin)
             if nargin == 0
                 jointPositions = {[0; 0; 0]};
                 jointAxes = {[0; 0; 1]};
@@ -664,12 +654,12 @@ classdef GeneralKinematicTree < KinematicTree
             end
             com = com * (1 / sum(obj.linkMasses));
         end
-        function J_com = calculateCenterOfMassJacobian(obj)
-            J_com = zeros(3, obj.numberOfJoints);
+        function jacobian = calculateCenterOfMassJacobian(obj)
+            jacobian = zeros(3, obj.numberOfJoints);
             for i_joint = 1 : obj.numberOfJoints
-                J_com = J_com + obj.linkJacobians{i_joint} * obj.linkMasses(i_joint);
+                jacobian = jacobian + obj.linkJacobians{i_joint} * obj.linkMasses(i_joint);
             end
-            J_com = J_com * (1 / sum(obj.linkMasses));
+            jacobian = jacobian * (1 / sum(obj.linkMasses));
         end
         function Jacobian = calculateArbitraryPointJacobian(obj, point, jointIndex, coordinateFrame)
             Jacobian = zeros(3, obj.numberOfJoints);
