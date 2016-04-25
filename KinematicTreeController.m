@@ -1,5 +1,9 @@
-function stickFigure = KinematicTreeController(kinematicTree, sceneBound)
-    stickFigure = KinematicTreeStickFigure(kinematicTree, sceneBound);
+function stickFigure = KinematicTreeController(kinematicTree, sceneBound, visualizationVolume)
+    if nargin < 3
+        visualizationVolume = 'none';
+    end
+
+    stickFigure = KinematicTreeStickFigure(kinematicTree, sceneBound, visualizationVolume);
     stickFigure.showLinkMassEllipsoids = true;
     stickFigure.update();
 
@@ -10,7 +14,7 @@ function stickFigure = KinematicTreeController(kinematicTree, sceneBound)
     line_height = 20;
     button_width = 20;
     box_width = 50;
-    label_width = 150;
+    label_width = 200;
     
     figure_width = button_width*4 + box_width + label_width;
     figure_height = line_height * kinematicTree.numberOfJoints;
