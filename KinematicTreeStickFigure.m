@@ -36,7 +36,7 @@ classdef KinematicTreeStickFigure < handle
         showJointLabels = false;
     end 
     methods
-        function this = KinematicTreeStickFigure(kinematicTree, sceneBound, linkShapes, axesHandle)
+        function this = KinematicTreeStickFigure(kinematicTree, sceneBound, visualizationVolume, axesHandle)
             this.kinematicTree = kinematicTree;
             kinematicTree.updateLinkVisualizationData();
             if nargin < 2
@@ -45,10 +45,7 @@ classdef KinematicTreeStickFigure < handle
                 this.sceneBound = sceneBound;
             end
             if nargin < 3
-                linkShapes = cell(1, kinematicTree.numberOfJoints);
-                for i_joint = 1 : kinematicTree.numberOfJoints
-                    linkShapes{i_joint} = 'ellipsoid';
-                end
+                visualizationVolume = 'none';
             end
             if nargin < 4
                 this.sceneFigure = figure( 'Position', [500, 500, 600, 600], 'Name', 'scene' );
@@ -143,7 +140,7 @@ classdef KinematicTreeStickFigure < handle
 %                     disp(num2str(U));
 %                 end
                 
-                if strcmp(linkShapes{i_joint}, 'ellipsoid');
+                if strcmp(visualizationVolume, 'ellipsoid');
                 
                     a = sqrt((5/(2*m)*(- I_a + I_b + I_c)));
                     b = sqrt((5/(2*m)*(+ I_a - I_b + I_c)));
@@ -175,7 +172,7 @@ classdef KinematicTreeStickFigure < handle
 %    'EdgeColor','none',...
 %    'FaceLighting','gouraud')            
                     
-                elseif strcmp(linkShapes{i_joint}, 'cuboid');
+                elseif strcmp(visualizationVolume, 'cuboid');
                     a = sqrt((6/m * (- I_a + I_b + I_c)));
                     b = sqrt((6/m * (+ I_a - I_b + I_c)));
                     c = sqrt((6/m * (+ I_a + I_b - I_c)));
@@ -230,6 +227,10 @@ classdef KinematicTreeStickFigure < handle
 %                     shape_data(3, :, :) = z;
 % 
 %                     this.linkMassShapeData{i_joint} = shape_data;
+                else
+                    % don't show anything
+                    this.linkMassShapeData{i_joint} = [];
+                    this.linkMassShapeSurfs(i_joint) = patch('Faces', [], 'Vertices', []);
                 end
             end
             
@@ -327,7 +328,7 @@ classdef KinematicTreeStickFigure < handle
             
             % update segment mass shapes
             for i_joint = 1 : this.kinematicTree.numberOfJoints
-                if this.showLinkMassEllipsoids && (this.kinematicTree.linkMasses(i_joint) > 0)
+                if this.showLinkMassEllipsoids && (this.kinematicTree.linkMasses(i_joint) > 0) && ~isempty(this.linkMassShapeData{i_joint})
                     % transform ellipsoid
                     link_transformation = this.kinematicTree.linkTransformations{i_joint};
                     inertia_transformation = [this.linkFrameToLinkInertiaRotations{i_joint} zeros(3, 1); 0 0 0 1];
