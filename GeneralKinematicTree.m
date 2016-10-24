@@ -580,7 +580,7 @@ classdef GeneralKinematicTree < KinematicTree
             inverse_coordinate_frame_adjoint = coordinate_frame_adjoint^(-1);
             body_jacobian_full = inverse_coordinate_frame_adjoint * obj.spatialJacobian;
             bodyJacobian = zeros(size(body_jacobian_full));
-            % remove columns that do not move this end-effector
+            % remove columns that do not move this point
             for i_joint = 1 : obj.numberOfJoints
                 if obj.connectivityMatrix(i_joint, attachmentJoint) || (i_joint == attachmentJoint)
                     bodyJacobian(:, i_joint) = body_jacobian_full(:, i_joint);

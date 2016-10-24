@@ -49,6 +49,7 @@ classdef KinematicTree < handle
         
         % labels
         jointLabels;
+        markerLabels;
         
     end
     methods (Abstract)
