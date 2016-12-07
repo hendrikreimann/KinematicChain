@@ -21,6 +21,7 @@ classdef KinematicTreeStickFigure < handle
         linkMassShapeResolution = 15;
         linkFrameToLinkInertiaRotations;
         jointLabels;
+        recordedMarkerPlots;
         
         % graphics
         jointPlotsColor = [0 0 1];
@@ -36,7 +37,7 @@ classdef KinematicTreeStickFigure < handle
         showJointLabels = false;
     end 
     methods
-        function this = KinematicTreeStickFigure(kinematicTree, sceneBound, visualizationVolume, axesHandle)
+        function this = KinematicTreeStickFigure(kinematicTree, sceneBound, visualizationVolume, recordedMarkers, axesHandle)
             this.kinematicTree = kinematicTree;
             kinematicTree.updateLinkVisualizationData();
             if nargin < 2
@@ -47,13 +48,17 @@ classdef KinematicTreeStickFigure < handle
             if nargin < 3
                 visualizationVolume = 'none';
             end
-            if nargin < 4
+            if nargin < 5
                 this.sceneFigure = figure( 'Position', [500, 500, 600, 600], 'Name', 'scene' );
                 this.sceneAxes = axes( 'Position', [ 0.1 0.1 0.8 0.8 ]);
             else
                 this.sceneFigure = get(axesHandle, 'parent');
                 this.sceneAxes = axesHandle;
             end
+            if nargin < 4
+                recordedMarkers = [];
+            end
+            
             axis equal; hold on;
             plot3([this.sceneBound(1, 1), this.sceneBound(1, 2)], [0, 0]+mean(sceneBound(2, :)), [0, 0]+mean(sceneBound(3, :)), 'color', 'k','Linewidth', 1, 'Linestyle',':');
             plot3([0, 0]+mean(sceneBound(1, :)), [this.sceneBound(2, 1), this.sceneBound(2, 2)], [0, 0]+mean(sceneBound(3, :)), 'color', 'k','Linewidth', 1, 'Linestyle',':');
@@ -255,7 +260,8 @@ classdef KinematicTreeStickFigure < handle
 %             colormap cool
 %             colormap autumn
             alpha(.4)
-            
+    
+            this.createRecordedMarkerPlots(recordedMarkers);
         end
         
         function update(this)
@@ -419,6 +425,32 @@ classdef KinematicTreeStickFigure < handle
                 color = get(this.fixedMarkerPlots(marker_index), 'color');
             else
                 color = get(this.markerPlots{joint_index}(marker_index), 'color');
+            end
+        end
+        
+        function createRecordedMarkerPlots(this, recorded_marker_positions)
+            for i_marker = 1 : length(recorded_marker_positions) / 3;
+                this.recordedMarkerPlots(i_marker) = plot3(0, 0, 0, 'o', 'color', [1 1 1]*0.7);
+                
+                set ...
+                  ( ...
+                    this.recordedMarkerPlots(i_marker), ...
+                    'XData', recorded_marker_positions((i_marker-1)*3 + 1), ...
+                    'YData', recorded_marker_positions((i_marker-1)*3 + 2), ...
+                    'ZData', recorded_marker_positions((i_marker-1)*3 + 3) ...
+                  );
+            end
+            this.updateRecordedMarkerPlots(recorded_marker_positions);
+        end
+        function updateRecordedMarkerPlots(this, recorded_marker_positions)
+            for i_marker = 1 : length(recorded_marker_positions) / 3;
+                set ...
+                  ( ...
+                    this.recordedMarkerPlots(i_marker), ...
+                    'XData', recorded_marker_positions((i_marker-1)*3 + 1), ...
+                    'YData', recorded_marker_positions((i_marker-1)*3 + 2), ...
+                    'ZData', recorded_marker_positions((i_marker-1)*3 + 3) ...
+                  );
             end
         end
         

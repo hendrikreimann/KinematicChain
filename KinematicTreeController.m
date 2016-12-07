@@ -1,9 +1,12 @@
-function stickFigure = KinematicTreeController(kinematicTree, sceneBound, visualizationVolume)
+function stickFigure = KinematicTreeController(kinematicTree, sceneBound, visualizationVolume, recordedMarkers)
     if nargin < 3
         visualizationVolume = 'none';
     end
+    if nargin < 4
+        recordedMarkers = [];
+    end
 
-    stickFigure = KinematicTreeStickFigure(kinematicTree, sceneBound, visualizationVolume);
+    stickFigure = KinematicTreeStickFigure(kinematicTree, sceneBound, visualizationVolume, recordedMarkers);
     stickFigure.showLinkMassEllipsoids = true;
     stickFigure.update();
 
