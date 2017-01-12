@@ -1,3 +1,19 @@
+%     This file is part of the KinematicChain library
+%     Copyright (C) 2017 Hendrik Reimann <hendrikreimann@gmail.com>
+% 
+%     This program is free software: you can redistribute it and/or modify
+%     it under the terms of the GNU General Public License as published by
+%     the Free Software Foundation, either version 3 of the License, or
+%     (at your option) any later version.
+% 
+%     This program is distributed in the hope that it will be useful,
+%     but WITHOUT ANY WARRANTY; without even the implied warranty of
+%     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%     GNU General Public License for more details.
+% 
+%     You should have received a copy of the GNU General Public License
+%     along with this program.  If not, see <http://www.gnu.org/licenses/>.% compare the kinematic tree against the kinematic chain
+
 classdef GeneralKinematicTree < KinematicTree
     properties
         % reference data
@@ -8,6 +24,7 @@ classdef GeneralKinematicTree < KinematicTree
         transformedLinkInertiaMatrices;
         generalizedInertiaMatrices;
         markerReferencePositions;
+        jointAxes;
         
         % screw geometry data
         twistExponentials
@@ -45,6 +62,7 @@ classdef GeneralKinematicTree < KinematicTree
             obj = obj@KinematicTree(degrees_of_freedom, branchMatrix);
             
             % generate references
+            obj.jointAxes = jointAxes;
             for i_joint = 1 : degrees_of_freedom
                 obj.referenceJointTransformations{i_joint} = [eye(3), jointPositions{i_joint}; 0 0 0 1];
                 obj.referenceJointTwists{i_joint} = generateTwistCoordinates(jointPositions{i_joint}, jointAxes{i_joint}, jointTypes(i_joint));
