@@ -63,6 +63,10 @@ classdef KinematicTree < handle
         % adjustable gravitational constant
         standardGravity = 9.80665;
         
+        % info
+        jointGroups = {};
+        jointGroupLables = {};
+        
         % labels
         jointLabels;
         markerLabels;
@@ -231,6 +235,17 @@ classdef KinematicTree < handle
                 position = obj.fixedMarkerPositions(:, markerIndex);
             else
                 position = obj.markerPositions{jointIndex}(:, markerIndex);
+            end
+        end
+        function obj = addJointGroup(obj, group_label, group_joints)
+            obj.jointGroups = [obj.jointGroups; group_joints];
+            obj.jointGroupLables = [obj.jointGroupLables; group_label];
+        end
+        function joints = getJointGroup(obj, group_label)
+            joints = [];
+            group_index = strcmp(obj.jointGroupLables, group_label);
+            if ~isempty(group_index)
+                joints = obj.jointGroups{group_index};
             end
         end
     end
