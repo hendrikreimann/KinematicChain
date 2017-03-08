@@ -701,6 +701,16 @@ classdef GeneralKinematicTree < KinematicTree
                 Jacobian(:, i_joint) = current_column(1:3) * point_moved_by_this_joint;
             end
         end
+        
+        
+        function position = getPointOfInterestPosition(obj, label)
+            % determine joint index
+            index_in_list = find(strcmp(obj.pointsOfInterestLables, label), 1, 'first');
+            joint_index = obj.pointsOfInterestJointIndices{index_in_list};
+            
+            position = eye(3, 4) * obj.productsOfExponentials{joint_index} * [obj.pointsOfInterest{index_in_list}; 1];
+        end
+        
     end
 end
 

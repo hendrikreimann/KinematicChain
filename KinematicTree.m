@@ -68,8 +68,15 @@ classdef KinematicTree < handle
         jointGroupLables = {};
         
         % labels
-        jointLabels;
-        markerLabels;
+        jointLabels = {};
+        endEffectorLabels = {};
+        markerLabels = {};
+        segmentLabels = {};
+        segmentJointIndices = {};
+        pointsOfInterestLables = {};
+        pointsOfInterest = {};
+        pointsOfInterestJointIndices = {};
+        
         
     end
     methods (Abstract)
@@ -243,10 +250,33 @@ classdef KinematicTree < handle
         end
         function joints = getJointGroup(obj, group_label)
             joints = [];
-            group_index = strcmp(obj.jointGroupLables, group_label);
+            group_index = find(strcmp(obj.jointGroupLables, group_label), 1, 'first');
             if ~isempty(group_index)
                 joints = obj.jointGroups{group_index};
             end
         end
+        function index = getEndEffectorIndex(obj, label)
+            index = find(strcmp(obj.endEffectorLabels, label), 1, 'first');
+        end
+        function obj = addSegmentLabel(obj, segment_label, attached_joint_index)
+            obj.segmentLabels = [obj.segmentLabels; segment_label];
+            obj.segmentJointIndices = [obj.segmentJointIndices; attached_joint_index];
+        end
+        function joint_index = getSegmentJointIndex(obj, segment_label)
+            joint_index = [];
+            index_in_list = find(strcmp(obj.segmentLabels, segment_label), 1, 'first');
+            if ~isempty(index_in_list)
+                joint_index = obj.segmentJointIndices{index_in_list};
+            end
+        end
+        function obj = addPointOfInterest(obj, label, point, attached_joint_index)
+            obj.pointsOfInterestLables = [obj.pointsOfInterestLables; label];
+            obj.pointsOfInterest = [obj.pointsOfInterest; point];
+            obj.pointsOfInterestJointIndices = [obj.pointsOfInterestJointIndices; attached_joint_index];
+        end
+        
+        
+        
+        
     end
 end
